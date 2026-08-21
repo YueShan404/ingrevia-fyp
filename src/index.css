@@ -1,0 +1,228 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Ingrevia warm terracotta & cream palette */
+    --background: 40 33% 96%;
+    --foreground: 17 37% 19%;
+    --card: 0 0% 100%;
+    --card-foreground: 17 37% 19%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 17 37% 19%;
+    --primary: 18 71% 42%;
+    --primary-foreground: 40 33% 96%;
+    --secondary: 26 53% 91%;
+    --secondary-foreground: 17 37% 19%;
+    --muted: 30 25% 93%;
+    --muted-foreground: 19 26% 43%;
+    --accent: 126 24% 44%;
+    --accent-foreground: 40 33% 96%;
+    --destructive: 8 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 26 22% 87%;
+    --input: 26 22% 87%;
+    --ring: 18 71% 42%;
+    /* Brand (logo) keep green for identity */
+    --brand-deep: 175 100% 11%;
+    --brand-mid: 85 54% 51%;
+    --brand-lime: 75 60% 60%;
+    /* Semantic helpers */
+    --terra: 18 71% 42%;
+    --clay: 19 53% 55%;
+    --leaf: 126 24% 44%;
+    --brown: 17 37% 19%;
+    --mutedbrown: 19 26% 43%;
+    --peach: 26 53% 91%;
+    --ivory: 40 33% 96%;
+    --chart-1: 18 71% 42%;
+    --chart-2: 126 24% 44%;
+    --chart-3: 25 60% 50%;
+    --chart-4: 200 35% 55%;
+    --chart-5: 45 70% 60%;
+    --radius: 1rem;
+    --font-heading: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --sidebar-background: 17 37% 19%;
+    --sidebar-foreground: 40 20% 88%;
+    --sidebar-primary: 18 71% 42%;
+    --sidebar-primary-foreground: 40 33% 96%;
+    --sidebar-accent: 17 30% 24%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 17 30% 28%;
+    --sidebar-ring: 18 71% 50%;
+  }
+
+  .dark {
+    --background: 18 24% 9%;
+    --foreground: 40 33% 92%;
+    --card: 18 22% 12%;
+    --card-foreground: 40 33% 92%;
+    --popover: 18 22% 12%;
+    --popover-foreground: 40 33% 92%;
+    --primary: 18 71% 52%;
+    --primary-foreground: 18 24% 8%;
+    --secondary: 18 24% 18%;
+    --secondary-foreground: 40 33% 92%;
+    --muted: 18 22% 16%;
+    --muted-foreground: 28 18% 65%;
+    --accent: 126 30% 55%;
+    --accent-foreground: 18 24% 10%;
+    --destructive: 8 60% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 18 22% 22%;
+    --input: 18 22% 22%;
+    --ring: 18 71% 52%;
+    --brand-deep: 175 60% 20%;
+    --brand-mid: 85 54% 51%;
+    --brand-lime: 75 60% 60%;
+    --terra: 18 71% 52%;
+    --clay: 19 53% 60%;
+    --leaf: 126 30% 55%;
+    --brown: 18 24% 12%;
+    --mutedbrown: 28 18% 65%;
+    --peach: 26 30% 30%;
+    --ivory: 40 33% 92%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+/* Accessibility: high-contrast mode */
+.contrast-mode {
+  --background: 0 0% 0%;
+  --foreground: 0 0% 100%;
+  --card: 0 0% 0%;
+  --card-foreground: 0 0% 100%;
+  --primary: 22 85% 55%;
+  --primary-foreground: 0 0% 0%;
+  --secondary: 0 0% 15%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 90%;
+  --accent: 126 70% 60%;
+  --accent-foreground: 0 0% 0%;
+  --border: 0 0% 100%;
+  --input: 0 0% 100%;
+  --ring: 22 85% 55%;
+}
+.contrast-mode * {
+  text-shadow: none !important;
+  box-shadow: none !important;
+}
+.contrast-mode img {
+  filter: contrast(1.3);
+}
+
+/* Accessibility: large font mode */
+.large-font { font-size: 1.18rem; }
+.large-font h1 { font-size: 2.6rem; }
+.large-font h2 { font-size: 2.1rem; }
+.large-font h3 { font-size: 1.7rem; }
+.large-font .text-sm { font-size: 1rem; }
+.large-font .text-base { font-size: 1.18rem; }
+.large-font .text-lg { font-size: 1.35rem; }
+.large-font .text-xl { font-size: 1.55rem; }
+.large-font .text-2xl { font-size: 1.85rem; }
+
+/* Brand utilities */
+.brand-gradient {
+  background: linear-gradient(135deg, hsl(18 71% 42%), hsl(19 53% 55%));
+}
+.forest-gradient {
+  background: linear-gradient(160deg, hsl(17 37% 19%), hsl(18 55% 32%));
+}
+.glass-card {
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(180, 110, 70, 0.16);
+}
+.dark .glass-card {
+  background: rgba(40, 25, 20, 0.55);
+  border: 1px solid rgba(199, 116, 82, 0.18);
+}
+.text-gradient {
+  background: linear-gradient(120deg, hsl(18 71% 42%), hsl(126 24% 38%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.leaf-blob {
+  position: absolute;
+  border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
+  filter: blur(60px);
+  opacity: 0.28;
+  pointer-events: none;
+  animation: blob-float 14s ease-in-out infinite;
+}
+@keyframes blob-float {
+  0%, 100% { border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; transform: translate(0, 0) scale(1); }
+  50% { border-radius: 58% 42% 37% 63% / 56% 59% 41% 44%; transform: translate(20px, -16px) scale(1.08); }
+}
+@keyframes float-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-float-up { animation: float-up 0.55s ease-out both; }
+/* Staggered slide-up for editorial menus */
+@keyframes slide-up-card {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slide-up-card 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg, transparent, rgba(185, 78, 32, 0.12), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Flip card */
+.flip-card { perspective: 1200px; }
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-back { transform: rotateY(180deg); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: hsl(40 25% 94%); }
+::-webkit-scrollbar-thumb { background: hsl(18 50% 60%); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(18 71% 42%); }
+
+/* Editorial dotted divider */
+.editorial-divider {
+  border: none;
+  height: 1px;
+  background-image: linear-gradient(to right, hsl(19 26% 43%) 30%, transparent 0);
+  background-size: 6px 1px;
+  background-repeat: repeat-x;
+}
