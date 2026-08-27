@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { appApi, supabase } from '@/api/supabaseClient';
+import { isAuthPath } from '@/lib/authReturnTo';
 
 const AuthContext = createContext();
 
@@ -61,6 +62,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const navigateToLogin = () => {
+    if (isAuthPath(window.location.pathname)) return;
     appApi.auth.redirectToLogin(window.location.href);
   };
 

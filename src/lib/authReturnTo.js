@@ -18,8 +18,13 @@ export function safeReturnTo() {
     }
     const path = url.pathname + url.search;
     if (!path.startsWith("/") || path.startsWith("//") || path.includes("\\")) return "/";
+    if (isAuthPath(url.pathname)) return "/";
     return path;
   } catch {
     return "/";
   }
+}
+
+export function isAuthPath(pathname) {
+  return ["/login", "/register", "/forgot-password", "/reset-password"].includes(pathname);
 }
