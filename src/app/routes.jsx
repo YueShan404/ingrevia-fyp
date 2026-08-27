@@ -14,20 +14,28 @@ const CommunityRecipeDetail = lazy(() => import('@/features/community/CommunityR
 const MealPlanner = lazy(() => import('@/features/planner/MealPlanner'));
 const Dashboard = lazy(() => import('@/features/dashboard/Dashboard'));
 const Admin = lazy(() => import('@/features/admin/Admin'));
+const Login = lazy(() => import('@/features/auth/Login'));
+const Register = lazy(() => import('@/features/auth/Register'));
+const ForgotPassword = lazy(() => import('@/features/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('@/features/auth/ResetPassword'));
 
 export const appRoutes = [
   { path: '/', element: <Home /> },
-  { path: '/scan', element: <Scanner /> },
+  { path: '/login', element: <Login /> },
+  { path: '/register', element: <Register /> },
+  { path: '/forgot-password', element: <ForgotPassword /> },
+  { path: '/reset-password', element: <ResetPassword /> },
+  { path: '/scan', element: <Scanner />, protected: true },
   { path: '/encyclopedia', element: <Encyclopedia /> },
   { path: '/ingredient/:id', element: <IngredientDetail /> },
   { path: '/kitchen', element: <LittleKitchen /> },
   { path: '/recipe/:id', element: <RecipeDetail /> },
-  { path: '/favorites', element: <Favorites /> },
-  { path: '/history', element: <ScanHistory /> },
+  { path: '/favorites', element: <Favorites />, protected: true },
+  { path: '/history', element: <ScanHistory />, protected: true },
   { path: '/community', element: <Community /> },
-  { path: '/submit', element: <SubmitRecipe /> },
+  { path: '/submit', element: <SubmitRecipe />, protected: true },
   { path: '/community/:id', element: <CommunityRecipeDetail /> },
-  { path: '/planner', element: <MealPlanner /> },
-  { path: '/dashboard', element: <Dashboard /> },
-  { path: '/admin', element: <Admin /> },
+  { path: '/planner', element: <MealPlanner />, protected: true },
+  { path: '/dashboard', element: <Dashboard />, protected: true },
+  { path: '/admin', element: <Admin />, protected: true },
 ];

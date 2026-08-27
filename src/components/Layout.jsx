@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/AuthContext";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "./LanguageSwitcher";
 import AccessibilityPanel from "./AccessibilityPanel";
@@ -8,6 +9,7 @@ import { Menu, X, ScanLine, BookOpen, ChefHat, Home as HomeIcon, Heart, BarChart
 
 export default function Layout({ children }) {
   const { t, lang } = useI18n();
+  const { isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -105,6 +107,31 @@ export default function Layout({ children }) {
             </nav>
 
             <div className="flex items-center gap-1.5">
+              <div className="hidden sm:flex items-center gap-2">
+                {isAuthenticated ? (
+                  <button
+                    onClick={() => logout(false)}
+                    className="px-4 py-2 rounded-full text-sm font-semibold text-foreground/75 hover:bg-secondary hover:text-foreground transition-colors"
+                  >
+                    Logout
+                  </button>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="px-4 py-2 rounded-full text-sm font-semibold text-foreground/75 hover:bg-secondary hover:text-foreground transition-colors"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/register"
+                      className="px-4 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg transition-all"
+                    >
+                      Register
+                    </Link>
+                  </>
+                )}
+              </div>
               <AccessibilityPanel open={a11yOpen} setOpen={setA11yOpen} />
               <LanguageSwitcher />
               <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Menu">
@@ -137,6 +164,28 @@ export default function Layout({ children }) {
           </button>
         </div>
         <nav className="p-4 flex flex-col gap-1 overflow-y-auto max-h-[calc(100%-4.25rem)]">
+          <div className="grid grid-cols-2 gap-2 mb-3 sm:hidden">
+            {isAuthenticated ? (
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  logout(false);
+                }}
+                className="col-span-2 px-4 py-3 rounded-2xl text-sm font-semibold bg-secondary text-foreground"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setMobileOpen(false)} className="px-4 py-3 rounded-2xl text-sm font-semibold bg-secondary text-center">
+                  Login
+                </Link>
+                <Link to="/register" onClick={() => setMobileOpen(false)} className="px-4 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground text-center">
+                  Register
+                </Link>
+              </>
+            )}
+          </div>
           {allLinks.map((link) => {
             const Icon = link.icon;
             return (
