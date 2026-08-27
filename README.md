@@ -28,6 +28,20 @@ VITE_SUPABASE_STORAGE_BUCKET=ingrevia-uploads
 npm run dev
 ```
 
+## Project Structure
+
+```text
+src/
+  api/          Supabase client and backend API wrapper
+  app/          App providers, routing, and fallback pages
+  components/   Shared reusable components and UI primitives
+  features/     Feature screens grouped by domain
+  hooks/        Shared React hooks
+  lib/          Shared utilities, i18n, advisory, and state helpers
+  utils/        General utility exports
+supabase/       Database schema and backend setup notes
+```
+
 ## Production Build
 
 ```bash

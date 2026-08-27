@@ -3,12 +3,12 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import PageNotFound from './lib/PageNotFound';
+import PageNotFound from '@/app/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from '@/components/ScrollToTop';
 import LoadingScreen from '@/components/LoadingScreen';
-import { appRoutes } from '@/routes/appRoutes';
+import { appRoutes } from '@/app/routes';
 import { I18nProvider } from '@/lib/i18n';
 import { AccessibilityProvider } from '@/lib/accessibility';
 
