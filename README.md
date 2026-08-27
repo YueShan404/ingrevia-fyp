@@ -61,3 +61,5 @@ The scanner and bulk import features call Supabase Edge Functions named:
 
 - `recognizeIngredient`
 - `bulkImportIngredients`
+
+These Edge Functions must be created in Supabase before the AI scanner and admin bulk import can run against real backend logic. The rest of the frontend can run after the database schema, storage bucket, and authentication settings are configured.
