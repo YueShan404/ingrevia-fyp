@@ -34,20 +34,19 @@ export default function Layout({ children }) {
 
   const primaryLinks = [
     { to: "/", label: t("nav.home"), icon: HomeIcon },
-    { to: "/scan", label: t("nav.scan"), icon: ScanLine },
     { to: "/encyclopedia", label: t("nav.encyclopedia"), icon: BookOpen },
     { to: "/kitchen", label: t("nav.kitchen"), icon: ChefHat },
+    { to: "/community", label: t("nav.community"), icon: Users },
   ];
   const secondaryLinks = [
     { to: "/favorites", label: t("nav.favorites"), icon: Heart },
-    { to: "/dashboard", label: t("nav.dashboard"), icon: BarChart3 },
-    { to: "/community", label: t("nav.community"), icon: Users },
     { to: "/planner", label: t("nav.planner"), icon: CalendarDays },
     { to: "/submit", label: t("nav.submit"), icon: PenSquare },
     { to: "/history", label: t("nav.history"), icon: History },
+    { to: "/dashboard", label: t("nav.dashboard"), icon: BarChart3 },
     { to: "/admin", label: t("nav.admin"), icon: Shield },
   ];
-  const allLinks = [...primaryLinks, ...secondaryLinks];
+  const allLinks = [...primaryLinks, { to: "/scan", label: t("nav.scan"), icon: ScanLine }, ...secondaryLinks];
 
   const isActive = (path) => (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path));
 
@@ -107,6 +106,13 @@ export default function Layout({ children }) {
             </nav>
 
             <div className="flex items-center gap-1.5">
+              <Link
+                to="/scan"
+                className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg transition-all"
+              >
+                <ScanLine className="w-4 h-4" />
+                {t("nav.scan")}
+              </Link>
               <div className="hidden sm:flex items-center gap-2">
                 {isAuthenticated ? (
                   <button
