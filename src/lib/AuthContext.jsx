@@ -35,18 +35,16 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await appApi.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
+      setAuthError(null);
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {
       console.error('User auth check failed:', error);
+      setUser(null);
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
       setAuthChecked(true);
-      
-      setAuthError({
-        type: 'auth_required',
-        message: 'Authentication required'
-      });
+      setAuthError(null);
     }
   };
 
