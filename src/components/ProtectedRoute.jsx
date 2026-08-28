@@ -3,14 +3,16 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
+const ADMIN_EMAIL = "shanyuew416@gmail.com";
+
 const DefaultFallback = () => (
   <div className="fixed inset-0 flex items-center justify-center">
     <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
   </div>
 );
 
-export default function ProtectedRoute({ children, fallback = <DefaultFallback />, unauthenticatedElement }) {
-  const { isAuthenticated, isLoadingAuth, authChecked, authError, checkUserAuth } = useAuth();
+export default function ProtectedRoute({ children, fallback = <DefaultFallback />, unauthenticatedElement, adminOnly = false }) {
+  const { user, isAuthenticated, isLoadingAuth, authChecked, authError, checkUserAuth } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -32,6 +34,10 @@ export default function ProtectedRoute({ children, fallback = <DefaultFallback /
 
   if (!isAuthenticated) {
     return unauthenticatedElement || <Navigate to={`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  }
+
+  if (adminOnly && user?.email?.toLowerCase() !== ADMIN_EMAIL) {
+    return <Navigate to="/" replace />;
   }
 
   return children || <Outlet />;

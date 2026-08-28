@@ -79,3 +79,16 @@ Deploy:
 ```bash
 supabase functions deploy lookupFoodNutrition
 ```
+
+## bulkImportIngredients and bulkImportRecipes
+
+These functions support the Admin Control Panel CSV import buttons.
+
+Deploy both after creating the Supabase Storage bucket:
+
+```bash
+supabase functions deploy bulkImportIngredients
+supabase functions deploy bulkImportRecipes
+```
+
+The admin panel uploads CSV files to Supabase Storage first, then sends the file URL to the matching bulk import function.

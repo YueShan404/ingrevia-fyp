@@ -37,5 +37,5 @@ export const appRoutes = [
   { path: '/community/:id', element: <CommunityRecipeDetail /> },
   { path: '/planner', element: <MealPlanner />, protected: true },
   { path: '/dashboard', element: <Dashboard />, protected: true },
-  { path: '/admin', element: <Admin />, protected: true },
+  { path: '/admin', element: <Admin />, protected: true, adminOnly: true },
 ];

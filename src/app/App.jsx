@@ -36,7 +36,7 @@ const AuthenticatedApp = () => {
           <Route
             key={route.path}
             path={route.path}
-            element={route.protected ? <ProtectedRoute>{route.element}</ProtectedRoute> : route.element}
+            element={route.protected ? <ProtectedRoute adminOnly={route.adminOnly}>{route.element}</ProtectedRoute> : route.element}
           />
         ))}
         <Route path="*" element={<PageNotFound />} />
