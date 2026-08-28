@@ -13,6 +13,42 @@ const json = (body: unknown, status = 200) =>
   });
 
 const textOrNull = (value: string) => value || null;
+const ADMIN_EMAIL = "shanyuew416@gmail.com";
+
+const assertAdmin = async (request: Request, supabaseUrl: string, serviceRoleKey: string) => {
+  const authHeader = request.headers.get("Authorization");
+  if (!authHeader) throw new Error("Authentication required.");
+
+  const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: {
+      apikey: serviceRoleKey,
+      Authorization: authHeader,
+    },
+  });
+
+  if (!response.ok) throw new Error("Could not verify current user.");
+  const user = await response.json();
+  if (String(user.email || "").toLowerCase() !== ADMIN_EMAIL) {
+    throw new Error("Admin access required.");
+  }
+};
+
+const downloadImportFile = async (payload: { bucket?: string; file_path?: string }, serviceRoleKey: string, supabaseUrl: string) => {
+  const expectedBucket = Deno.env.get("SUPABASE_STORAGE_BUCKET") || "ingrevia-uploads";
+  if (payload.bucket !== expectedBucket || !payload.file_path) {
+    throw new Error(`Import file must be uploaded to ${expectedBucket}.`);
+  }
+  if (payload.file_path.includes("..") || payload.file_path.startsWith("/")) {
+    throw new Error("Invalid import file path.");
+  }
+
+  const response = await fetch(
+    `${supabaseUrl}/storage/v1/object/${expectedBucket}/${payload.file_path}`,
+    { headers: { Authorization: `Bearer ${serviceRoleKey}` } },
+  );
+  if (!response.ok) throw new Error(`Could not download import file: ${await response.text()}`);
+  return response.text();
+};
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -22,13 +58,10 @@ Deno.serve(async (request) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     if (!supabaseUrl || !serviceRoleKey) return json({ error: "Missing Supabase environment variables." }, 500);
 
-    const { file_url } = await request.json();
-    if (!file_url) return json({ error: "file_url is required." }, 400);
+    await assertAdmin(request, supabaseUrl, serviceRoleKey);
+    const payload = await request.json();
 
-    const file = await fetch(file_url);
-    if (!file.ok) throw new Error(`Could not download CSV: ${await file.text()}`);
-
-    const rows = parseCsv(await file.text()).map((row) => ({
+    const rows = parseCsv(await downloadImportFile(payload, serviceRoleKey, supabaseUrl)).map((row) => ({
       name: row.name,
       name_bm: textOrNull(row.name_bm),
       name_zh: textOrNull(row.name_zh),

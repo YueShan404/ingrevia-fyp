@@ -128,10 +128,36 @@ alter table public.recipes enable row level security;
 alter table public.community_recipes enable row level security;
 alter table public.scan_history enable row level security;
 
+drop policy if exists "Public can read ingredients" on public.ingredients;
+drop policy if exists "Public can read recipes" on public.recipes;
+drop policy if exists "Public can read approved community recipes" on public.community_recipes;
+drop policy if exists "Admin can manage ingredients" on public.ingredients;
+drop policy if exists "Admin can manage recipes" on public.recipes;
+drop policy if exists "Admin can manage community recipes" on public.community_recipes;
+drop policy if exists "Authenticated users can submit community recipes" on public.community_recipes;
+drop policy if exists "Users can read own scan history" on public.scan_history;
+drop policy if exists "Users can create own scan history" on public.scan_history;
+drop policy if exists "Users can delete own scan history" on public.scan_history;
+
 create policy "Public can read ingredients" on public.ingredients for select using (true);
 create policy "Public can read recipes" on public.recipes for select using (true);
 create policy "Public can read approved community recipes" on public.community_recipes
   for select using (status = 'approved' or auth.role() = 'authenticated');
+
+create policy "Admin can manage ingredients" on public.ingredients
+  for all to authenticated
+  using (lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com')
+  with check (lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com');
+
+create policy "Admin can manage recipes" on public.recipes
+  for all to authenticated
+  using (lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com')
+  with check (lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com');
+
+create policy "Admin can manage community recipes" on public.community_recipes
+  for all to authenticated
+  using (lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com')
+  with check (lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com');
 
 create policy "Authenticated users can submit community recipes" on public.community_recipes
   for insert to authenticated with check (true);
@@ -143,5 +169,35 @@ create policy "Users can create own scan history" on public.scan_history
 create policy "Users can delete own scan history" on public.scan_history
   for delete to authenticated using (user_id = auth.uid());
 
--- Create a public bucket named "ingrevia-uploads" in Storage.
--- Then add storage policies that allow authenticated users to upload and public users to read.
+insert into storage.buckets (id, name, public)
+values ('ingrevia-uploads', 'ingrevia-uploads', false)
+on conflict (id) do update set public = false;
+
+drop policy if exists "Users can upload own ingrevia files" on storage.objects;
+drop policy if exists "Users can read own ingrevia files" on storage.objects;
+drop policy if exists "Admin can manage ingrevia uploads" on storage.objects;
+
+create policy "Users can upload own ingrevia files" on storage.objects
+  for insert to authenticated
+  with check (
+    bucket_id = 'ingrevia-uploads'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+create policy "Users can read own ingrevia files" on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'ingrevia-uploads'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+create policy "Admin can manage ingrevia uploads" on storage.objects
+  for all to authenticated
+  using (
+    bucket_id = 'ingrevia-uploads'
+    and lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com'
+  )
+  with check (
+    bucket_id = 'ingrevia-uploads'
+    and lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com'
+  );

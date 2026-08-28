@@ -69,9 +69,9 @@ export default function Admin() {
     if (!file) return;
     setBulkImporting(type);
     try {
-      const { file_url } = await appApi.integrations.Core.UploadFile({ file });
+      const { bucket, file_path, file_url } = await appApi.integrations.Core.UploadFile({ file });
       const functionName = type === "ingredients" ? "bulkImportIngredients" : "bulkImportRecipes";
-      const resp = await appApi.functions.invoke(functionName, { file_url });
+      const resp = await appApi.functions.invoke(functionName, { bucket, file_path, file_url });
       const data = resp?.data || {};
       toast({
         title: type === "ingredients" ? "Ingredients imported" : "Recipes imported",

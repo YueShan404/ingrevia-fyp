@@ -167,15 +167,20 @@ export const appApi = {
     Core: {
       async UploadFile({ file }) {
         const extension = file.name.split(".").pop();
-        const path = `${crypto.randomUUID()}.${extension}`;
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!user) throw new Error("Authentication required");
+
+        const path = `${user.id}/${crypto.randomUUID()}.${extension}`;
         const { error } = await supabase.storage.from(storageBucket).upload(path, file, {
           cacheControl: "3600",
           upsert: false,
         });
         if (error) throw error;
 
-        const { data } = supabase.storage.from(storageBucket).getPublicUrl(path);
-        return { file_url: data.publicUrl };
+        const { data, error: signedUrlError } = await supabase.storage.from(storageBucket).createSignedUrl(path, 60 * 60);
+        if (signedUrlError) throw signedUrlError;
+        return { bucket: storageBucket, file_path: path, file_url: data.signedUrl };
       },
     },
   },

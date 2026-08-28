@@ -6,7 +6,7 @@ The scanner frontend uploads an image to Supabase Storage, then calls this funct
 
 ```json
 {
-  "image_url": "https://your-project.supabase.co/storage/v1/object/public/ingrevia-uploads/example.jpg"
+  "image_url": "https://your-project.supabase.co/storage/v1/object/sign/ingrevia-uploads/user-id/example.jpg?token=..."
 }
 ```
 
@@ -92,3 +92,4 @@ supabase functions deploy bulkImportRecipes
 ```
 
 The admin panel uploads CSV files to Supabase Storage first, then sends the file URL to the matching bulk import function.
+Only `shanyuew416@gmail.com` can run these import functions. Deploy them with JWT verification enabled so the function receives the logged-in Supabase user token.
