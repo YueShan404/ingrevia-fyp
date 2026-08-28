@@ -89,7 +89,12 @@ Deploy both after creating the Supabase Storage bucket:
 ```bash
 supabase functions deploy bulkImportIngredients
 supabase functions deploy bulkImportRecipes
+supabase functions deploy uploadAnnouncementImage
 ```
 
 The admin panel uploads CSV files to Supabase Storage first, then sends the file URL to the matching bulk import function.
 Only `shanyuew416@gmail.com` can run these import functions. Deploy them with JWT verification enabled so the function receives the logged-in Supabase user token.
+
+## uploadAnnouncementImage
+
+This admin-only function uploads announcement pictures to the public `ingrevia-public/announcements` storage path and returns a public image URL for the announcement card.

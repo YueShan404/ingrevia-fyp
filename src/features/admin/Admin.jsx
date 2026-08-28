@@ -19,6 +19,7 @@ import {
   Upload,
   Users,
   X,
+  Megaphone,
 } from "lucide-react";
 
 const TARGET_INGREDIENTS = 30;
@@ -29,10 +30,13 @@ export default function Admin() {
   const { toast } = useToast();
   const ingredientFileRef = useRef(null);
   const recipeFileRef = useRef(null);
+  const announcementImageRef = useRef(null);
   const [tab, setTab] = useState("overview");
   const [ingredients, setIngredients] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [community, setCommunity] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [announcementForm, setAnnouncementForm] = useState({ title: "", body: "", category: "Update", image_url: "", is_published: true });
   const [loading, setLoading] = useState(true);
   const [bulkImporting, setBulkImporting] = useState("");
 
@@ -42,10 +46,12 @@ export default function Admin() {
       appApi.entities.Ingredient.list().catch(() => []),
       appApi.entities.Recipe.list().catch(() => []),
       appApi.entities.CommunityRecipe.list("-created_date").catch(() => []),
-    ]).then(([ings, recs, comm]) => {
+      appApi.entities.Announcement.list("-created_date").catch(() => []),
+    ]).then(([ings, recs, comm, anns]) => {
       setIngredients(ings || []);
       setRecipes(recs || []);
       setCommunity(comm || []);
+      setAnnouncements(anns || []);
       setLoading(false);
     });
   };
@@ -118,11 +124,43 @@ export default function Admin() {
     loadAll();
   };
 
+  const uploadAnnouncementImage = async (file) => {
+    if (!file) return;
+    const { file_url } = await appApi.integrations.Core.UploadAnnouncementImage({ file });
+    setAnnouncementForm((current) => ({ ...current, image_url: file_url }));
+  };
+
+  const createAnnouncement = async (event) => {
+    event.preventDefault();
+    if (!announcementForm.title.trim() || !announcementForm.body.trim()) return;
+    await appApi.entities.Announcement.create({
+      ...announcementForm,
+      title: announcementForm.title.trim(),
+      body: announcementForm.body.trim(),
+      category: announcementForm.category.trim() || "Update",
+    });
+    setAnnouncementForm({ title: "", body: "", category: "Update", image_url: "", is_published: true });
+    if (announcementImageRef.current) announcementImageRef.current.value = "";
+    loadAll();
+  };
+
+  const toggleAnnouncement = async (item) => {
+    await appApi.entities.Announcement.update(item.id, { is_published: !item.is_published });
+    loadAll();
+  };
+
+  const deleteAnnouncement = async (id) => {
+    if (!confirm(t("admin.confirm_delete"))) return;
+    await appApi.entities.Announcement.delete(id);
+    loadAll();
+  };
+
   const tabs = [
     { key: "overview", label: "Overview", icon: BarChart3 },
     { key: "ingredients", label: t("admin.tab_ingredients"), icon: BookOpen, count: ingredients.length },
     { key: "recipes", label: t("admin.tab_recipes"), icon: ChefHat, count: recipes.length },
     { key: "community", label: t("admin.tab_community"), icon: Users, count: stats.pending },
+    { key: "announcements", label: "Announcements", icon: Megaphone, count: announcements.length },
     { key: "integrations", label: "Integrations", icon: Sparkles },
   ];
 
@@ -137,7 +175,7 @@ export default function Admin() {
             </div>
             <h1 className="font-heading font-extrabold text-3xl mb-2">Admin Control Panel</h1>
             <p className="text-muted-foreground max-w-2xl">
-              Manage the curated ingredient dataset, Malaysian recipe catalogue, community submissions, and scanner integrations.
+              Manage datasets, Malaysian recipes, announcements, community submissions, and scanner integrations.
             </p>
           </div>
           <button
@@ -235,6 +273,17 @@ export default function Admin() {
             rejectCommunity={rejectCommunity}
             deleteCommunity={deleteCommunity}
             t={t}
+          />
+        ) : tab === "announcements" ? (
+          <AnnouncementManager
+            announcements={announcements}
+            form={announcementForm}
+            setForm={setAnnouncementForm}
+            imageRef={announcementImageRef}
+            onImageUpload={uploadAnnouncementImage}
+            onSubmit={createAnnouncement}
+            onToggle={toggleAnnouncement}
+            onDelete={deleteAnnouncement}
           />
         ) : (
           <Integrations />
@@ -376,6 +425,88 @@ function CommunityModeration({ community, approveCommunity, rejectCommunity, del
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function AnnouncementManager({ announcements, form, setForm, imageRef, onImageUpload, onSubmit, onToggle, onDelete }) {
+  return (
+    <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+      <form onSubmit={onSubmit} className="rounded-3xl border border-border/50 bg-card/85 p-5 shadow-sm">
+        <h2 className="font-heading font-bold text-xl mb-1">Create announcement</h2>
+        <p className="text-sm text-muted-foreground mb-5">Post updates that users can read from the Announcements page.</p>
+
+        <label className="block text-sm font-semibold mb-2">Title</label>
+        <input
+          value={form.title}
+          onChange={(event) => setForm({ ...form, title: event.target.value })}
+          className="mb-4 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder="New scanner update"
+        />
+
+        <label className="block text-sm font-semibold mb-2">Category</label>
+        <input
+          value={form.category}
+          onChange={(event) => setForm({ ...form, category: event.target.value })}
+          className="mb-4 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder="Update"
+        />
+
+        <label className="block text-sm font-semibold mb-2">Message</label>
+        <textarea
+          value={form.body}
+          onChange={(event) => setForm({ ...form, body: event.target.value })}
+          rows={6}
+          className="mb-4 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+          placeholder="Tell users what changed..."
+        />
+
+        <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={(event) => onImageUpload(event.target.files?.[0])} />
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <button type="button" onClick={() => imageRef.current?.click()} className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2.5 text-sm font-semibold hover:bg-secondary/70">
+            <Upload className="w-4 h-4" />
+            Upload picture
+          </button>
+          <label className="inline-flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={form.is_published} onChange={(event) => setForm({ ...form, is_published: event.target.checked })} />
+            Published
+          </label>
+        </div>
+
+        {form.image_url && <img src={form.image_url} alt="" className="mb-4 h-36 w-full rounded-2xl object-cover" />}
+
+        <button type="submit" className="w-full rounded-full bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20">
+          Publish announcement
+        </button>
+      </form>
+
+      <section className="space-y-3">
+        {announcements.length === 0 ? (
+          <p className="rounded-3xl border border-border/50 bg-card/80 p-8 text-center text-muted-foreground">No announcements yet.</p>
+        ) : announcements.map((item) => (
+          <article key={item.id} className="rounded-3xl border border-border/50 bg-card/85 p-4 shadow-sm">
+            <div className="flex gap-4">
+              {item.image_url && <img src={item.image_url} alt="" className="h-20 w-24 rounded-2xl object-cover shrink-0" />}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground mb-1">
+                  <span className="rounded-full bg-primary/10 px-2.5 py-1 font-semibold text-primary">{item.category || "Update"}</span>
+                  <span>{item.is_published ? "Published" : "Draft"}</span>
+                </div>
+                <h3 className="font-heading font-bold truncate">{item.title}</h3>
+                <p className="line-clamp-2 text-sm text-muted-foreground mt-1">{item.body}</p>
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => onToggle(item)} className="rounded-full bg-secondary px-3 py-2 text-xs font-semibold hover:bg-secondary/70">
+                {item.is_published ? "Unpublish" : "Publish"}
+              </button>
+              <button onClick={() => onDelete(item.id)} className="rounded-full bg-red-50 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-100">
+                Delete
+              </button>
+            </div>
+          </article>
+        ))}
+      </section>
     </div>
   );
 }

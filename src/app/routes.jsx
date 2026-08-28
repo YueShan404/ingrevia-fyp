@@ -14,6 +14,8 @@ const CommunityRecipeDetail = lazy(() => import('@/features/community/CommunityR
 const MealPlanner = lazy(() => import('@/features/planner/MealPlanner'));
 const Dashboard = lazy(() => import('@/features/dashboard/Dashboard'));
 const Admin = lazy(() => import('@/features/admin/Admin'));
+const Profile = lazy(() => import('@/features/profile/Profile'));
+const Announcements = lazy(() => import('@/features/announcements/Announcements'));
 const Login = lazy(() => import('@/features/auth/Login'));
 const Register = lazy(() => import('@/features/auth/Register'));
 const ForgotPassword = lazy(() => import('@/features/auth/ForgotPassword'));
@@ -37,5 +39,7 @@ export const appRoutes = [
   { path: '/community/:id', element: <CommunityRecipeDetail /> },
   { path: '/planner', element: <MealPlanner />, protected: true },
   { path: '/dashboard', element: <Dashboard />, protected: true },
+  { path: '/profile', element: <Profile />, protected: true },
+  { path: '/announcements', element: <Announcements /> },
   { path: '/admin', element: <Admin />, protected: true, adminOnly: true },
 ];

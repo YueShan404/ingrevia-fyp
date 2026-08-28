@@ -99,6 +99,18 @@ create table if not exists public.scan_history (
   user_id uuid references auth.users(id) on delete cascade default auth.uid()
 );
 
+create table if not exists public.announcements (
+  id uuid primary key default gen_random_uuid(),
+  created_date timestamptz not null default now(),
+  updated_date timestamptz not null default now(),
+  title text not null,
+  body text not null,
+  category text not null default 'Update',
+  image_url text,
+  is_published boolean not null default true,
+  created_by uuid references auth.users(id) on delete set null default auth.uid()
+);
+
 create or replace function public.set_updated_date()
 returns trigger as $$
 begin
@@ -123,10 +135,15 @@ drop trigger if exists set_scan_history_updated_date on public.scan_history;
 create trigger set_scan_history_updated_date before update on public.scan_history
 for each row execute function public.set_updated_date();
 
+drop trigger if exists set_announcements_updated_date on public.announcements;
+create trigger set_announcements_updated_date before update on public.announcements
+for each row execute function public.set_updated_date();
+
 alter table public.ingredients enable row level security;
 alter table public.recipes enable row level security;
 alter table public.community_recipes enable row level security;
 alter table public.scan_history enable row level security;
+alter table public.announcements enable row level security;
 
 drop policy if exists "Public can read ingredients" on public.ingredients;
 drop policy if exists "Public can read recipes" on public.recipes;
@@ -138,6 +155,8 @@ drop policy if exists "Authenticated users can submit community recipes" on publ
 drop policy if exists "Users can read own scan history" on public.scan_history;
 drop policy if exists "Users can create own scan history" on public.scan_history;
 drop policy if exists "Users can delete own scan history" on public.scan_history;
+drop policy if exists "Public can read published announcements" on public.announcements;
+drop policy if exists "Admin can manage announcements" on public.announcements;
 
 create policy "Public can read ingredients" on public.ingredients for select using (true);
 create policy "Public can read recipes" on public.recipes for select using (true);
@@ -169,13 +188,27 @@ create policy "Users can create own scan history" on public.scan_history
 create policy "Users can delete own scan history" on public.scan_history
   for delete to authenticated using (user_id = auth.uid());
 
+create policy "Public can read published announcements" on public.announcements
+  for select using (is_published = true);
+
+create policy "Admin can manage announcements" on public.announcements
+  for all to authenticated
+  using (lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com')
+  with check (lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com');
+
 insert into storage.buckets (id, name, public)
 values ('ingrevia-uploads', 'ingrevia-uploads', false)
 on conflict (id) do update set public = false;
 
+insert into storage.buckets (id, name, public)
+values ('ingrevia-public', 'ingrevia-public', true)
+on conflict (id) do update set public = true;
+
 drop policy if exists "Users can upload own ingrevia files" on storage.objects;
 drop policy if exists "Users can read own ingrevia files" on storage.objects;
 drop policy if exists "Admin can manage ingrevia uploads" on storage.objects;
+drop policy if exists "Public can read announcement images" on storage.objects;
+drop policy if exists "Admin can manage announcement images" on storage.objects;
 
 create policy "Users can upload own ingrevia files" on storage.objects
   for insert to authenticated
@@ -199,5 +232,24 @@ create policy "Admin can manage ingrevia uploads" on storage.objects
   )
   with check (
     bucket_id = 'ingrevia-uploads'
+    and lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com'
+  );
+
+create policy "Public can read announcement images" on storage.objects
+  for select using (
+    bucket_id = 'ingrevia-public'
+    and (storage.foldername(name))[1] = 'announcements'
+  );
+
+create policy "Admin can manage announcement images" on storage.objects
+  for all to authenticated
+  using (
+    bucket_id = 'ingrevia-public'
+    and (storage.foldername(name))[1] = 'announcements'
+    and lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com'
+  )
+  with check (
+    bucket_id = 'ingrevia-public'
+    and (storage.foldername(name))[1] = 'announcements'
     and lower(auth.jwt() ->> 'email') = 'shanyuew416@gmail.com'
   );

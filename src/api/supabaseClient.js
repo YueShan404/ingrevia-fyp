@@ -15,6 +15,7 @@ const tableByEntity = {
   Recipe: "recipes",
   CommunityRecipe: "community_recipes",
   ScanHistory: "scan_history",
+  Announcement: "announcements",
 };
 
 const applySort = (query, sort) => {
@@ -72,6 +73,7 @@ export const appApi = {
     Recipe: createEntityApi("Recipe"),
     CommunityRecipe: createEntityApi("CommunityRecipe"),
     ScanHistory: createEntityApi("ScanHistory"),
+    Announcement: createEntityApi("Announcement"),
   },
 
   auth: {
@@ -181,6 +183,20 @@ export const appApi = {
         const { data, error: signedUrlError } = await supabase.storage.from(storageBucket).createSignedUrl(path, 60 * 60);
         if (signedUrlError) throw signedUrlError;
         return { bucket: storageBucket, file_path: path, file_url: data.signedUrl };
+      },
+
+      async UploadAnnouncementImage({ file }) {
+        const buffer = await file.arrayBuffer();
+        const bytes = Array.from(new Uint8Array(buffer));
+        const { data, error } = await supabase.functions.invoke("uploadAnnouncementImage", {
+          body: {
+            file_name: file.name,
+            content_type: file.type || "application/octet-stream",
+            bytes,
+          },
+        });
+        if (error) throw error;
+        return data;
       },
     },
   },

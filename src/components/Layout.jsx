@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "./LanguageSwitcher";
 import AccessibilityPanel from "./AccessibilityPanel";
-import { Menu, X, ScanLine, BookOpen, ChefHat, Home as HomeIcon, Heart, BarChart3, Users, CalendarDays, PenSquare, History, Shield, ChevronDown } from "lucide-react";
+import { Menu, X, ScanLine, BookOpen, ChefHat, Home as HomeIcon, Heart, BarChart3, Users, CalendarDays, PenSquare, History, Shield, ChevronDown, UserCircle, Megaphone } from "lucide-react";
 
 export default function Layout({ children }) {
   const { t, lang } = useI18n();
@@ -41,6 +41,8 @@ export default function Layout({ children }) {
   const isAdmin = user?.email?.toLowerCase() === "shanyuew416@gmail.com";
   const secondaryLinks = [
     { to: "/favorites", label: t("nav.favorites"), icon: Heart },
+    { to: "/profile", label: t("nav.profile"), icon: UserCircle },
+    { to: "/announcements", label: t("nav.announcements"), icon: Megaphone },
     { to: "/planner", label: t("nav.planner"), icon: CalendarDays },
     { to: "/submit", label: t("nav.submit"), icon: PenSquare },
     { to: "/history", label: t("nav.history"), icon: History },
@@ -116,12 +118,21 @@ export default function Layout({ children }) {
               </Link>
               <div className="hidden sm:flex items-center gap-2">
                 {isAuthenticated ? (
-                  <button
-                    onClick={() => logout(false)}
-                    className="px-4 py-2 rounded-full text-sm font-semibold text-foreground/75 hover:bg-secondary hover:text-foreground transition-colors"
-                  >
-                    Logout
-                  </button>
+                  <>
+                    <Link
+                      to="/profile"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold text-foreground/75 hover:bg-secondary hover:text-foreground transition-colors"
+                    >
+                      <UserCircle className="w-4 h-4" />
+                      Profile
+                    </Link>
+                    <button
+                      onClick={() => logout(false)}
+                      className="px-3 py-2 rounded-full text-sm font-semibold text-foreground/75 hover:bg-secondary hover:text-foreground transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </>
                 ) : (
                   <>
                     <Link
@@ -150,7 +161,7 @@ export default function Layout({ children }) {
 
       </header>
 
-      {/* Mobile drawer — slides in from the left for a warm, 3D-feel */}
+      {/* Mobile drawer */}
       <div
         onClick={() => setMobileOpen(false)}
         className={`lg:hidden fixed inset-0 z-40 bg-[hsl(17,37%,19%,0.55)] backdrop-blur-sm transition-opacity duration-300 ease-out ${
@@ -220,7 +231,7 @@ export default function Layout({ children }) {
               <p className="text-[hsl(40,33%,88%)] text-xs font-semibold tracking-widest mt-3">{t("footer.tagline")}</p>
             </div>
             <div>
-              <h4 className="font-heading font-bold mb-3 text-sm tracking-wide uppercase text-white/90">{t("nav.scan")} • {t("nav.encyclopedia")}</h4>
+              <h4 className="font-heading font-bold mb-3 text-sm tracking-wide uppercase text-white/90">{t("nav.scan")} / {t("nav.encyclopedia")}</h4>
               <div className="flex flex-col gap-2 text-sm text-white/70">
                 {primaryLinks.map((l) => (
                   <Link key={l.to} to={l.to} className="hover:text-primary transition-colors w-fit">{l.label}</Link>
@@ -237,7 +248,7 @@ export default function Layout({ children }) {
             </div>
           </div>
           <div className="border-t border-white/15 mt-8 pt-6 text-center text-xs text-white/50">
-            {t("footer.rights")} · SDG 3 · SDG 4 · SDG 12
+            {t("footer.rights")} / SDG 3 / SDG 4 / SDG 12
           </div>
         </div>
       </footer>

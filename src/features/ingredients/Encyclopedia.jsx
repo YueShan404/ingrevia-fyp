@@ -19,7 +19,7 @@ export default function Encyclopedia() {
     }).catch(() => setLoading(false));
   }, []);
 
-  const categories = ["all", "herb", "vegetable", "fruit", "spice", "seafood", "grain", "legume", "other"];
+  const categories = ["all", "herb", "vegetable", "fruit", "spice", "protein", "grain", "legume", "other"];
 
   const filtered = useMemo(() => {
     return ingredients.filter((ing) => {
