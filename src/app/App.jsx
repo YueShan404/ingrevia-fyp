@@ -47,11 +47,18 @@ const AuthenticatedApp = () => {
 };
 
 function App() {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    return sessionStorage.getItem("ingreviaSplashShown") !== "true";
+  });
 
   useEffect(() => {
     recoverMisroutedProductionUrl();
   }, []);
+
+  const finishSplash = () => {
+    sessionStorage.setItem("ingreviaSplashShown", "true");
+    setShowSplash(false);
+  };
 
   return (
     <AuthProvider>
@@ -59,7 +66,7 @@ function App() {
         <Router>
           <I18nProvider>
             <AccessibilityProvider>
-              {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+              {showSplash && <SplashScreen onFinish={finishSplash} />}
               <ScrollToTop />
               <AuthenticatedApp />
             </AccessibilityProvider>
