@@ -12,10 +12,9 @@ export function safeReturnTo() {
   if (!raw) return "/";
   try {
     const appOrigin = getAppOrigin();
-    const url = new URL(raw, appOrigin || window.location.origin);
-    const allowedOrigins = new Set([window.location.origin]);
-    if (appOrigin) allowedOrigins.add(appOrigin);
-    if (!allowedOrigins.has(url.origin)) return "/";
+    const canonicalOrigin = appOrigin || window.location.origin;
+    const url = new URL(raw, canonicalOrigin);
+    if (url.origin !== canonicalOrigin) return "/";
     for (const p of ["access_token", "clear_access_token", "app_id", "app_base_url", "functions_version", "from_url"]) {
       url.searchParams.delete(p);
     }
@@ -40,6 +39,12 @@ export function getAppOrigin() {
   } catch {
     return "";
   }
+}
+
+export function getCanonicalLoginUrl(returnTo = "/") {
+  const appOrigin = getAppOrigin();
+  const loginPath = `/login?returnTo=${encodeURIComponent(returnTo)}`;
+  return appOrigin ? `${appOrigin}${loginPath}` : loginPath;
 }
 
 export function recoverMisroutedProductionUrl() {

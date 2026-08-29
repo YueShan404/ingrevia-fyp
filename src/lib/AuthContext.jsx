@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     
     if (shouldRedirect) {
-      appApi.auth.logout(window.location.href);
+      appApi.auth.logout("/");
     } else {
       appApi.auth.logout();
     }
@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
 
   const navigateToLogin = () => {
     if (isAuthPath(window.location.pathname)) return;
-    appApi.auth.redirectToLogin(window.location.href);
+    appApi.auth.redirectToLogin(window.location.pathname + window.location.search);
   };
 
   return (

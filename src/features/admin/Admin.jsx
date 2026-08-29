@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { appApi } from "@/api/supabaseClient";
 import { useI18n, localized } from "@/lib/i18n";
+import { useAuth } from "@/lib/AuthContext";
 import Layout from "@/components/Layout";
 import { useToast } from "@/components/ui/use-toast";
 import { Shield, Trash2, Check, X, Loader2, BookOpen, ChefHat, Users, Upload } from "lucide-react";
@@ -12,6 +13,7 @@ export default function Admin() {
   const [recipes, setRecipes] = useState([]);
   const [community, setCommunity] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const { toast } = useToast();
   const bulkFileRef = useRef(null);
   const [bulkImporting, setBulkImporting] = useState(false);
@@ -84,6 +86,20 @@ export default function Admin() {
     { key: "recipes", label: t("admin.tab_recipes"), icon: ChefHat, count: recipes.length },
     { key: "community", label: t("admin.tab_community"), icon: Users, count: community.filter((c) => c.status === "pending").length },
   ];
+
+  if (user?.role !== "admin") {
+    return (
+      <Layout>
+        <div className="max-w-xl mx-auto px-4 sm:px-6 py-16 text-center">
+          <div className="inline-flex w-14 h-14 rounded-2xl bg-destructive/10 items-center justify-center mb-4">
+            <Shield className="w-7 h-7 text-destructive" />
+          </div>
+          <h1 className="font-heading font-extrabold text-2xl mb-2">{t("admin.access_denied")}</h1>
+          <p className="text-muted-foreground">{t("admin.access_denied_body")}</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>

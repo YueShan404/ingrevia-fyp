@@ -1,4 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
+import { isAdminEmail } from "@/lib/admin";
+import { getCanonicalLoginUrl } from "@/lib/authReturnTo";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -94,6 +96,7 @@ export const appApi = {
       return {
         id: user.id,
         email: user.email,
+        role: user.user_metadata?.role || (isAdminEmail(user.email) ? "admin" : "user"),
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
         ...user.user_metadata,
       };
@@ -164,7 +167,7 @@ export const appApi = {
     },
 
     redirectToLogin(returnTo = "/") {
-      window.location.href = `/login?returnTo=${encodeURIComponent(returnTo)}`;
+      window.location.href = getCanonicalLoginUrl(returnTo);
     },
 
     setToken() {

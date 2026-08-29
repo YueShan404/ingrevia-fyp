@@ -9,7 +9,7 @@ import { Menu, X, ScanLine, BookOpen, ChefHat, Home as HomeIcon, Heart, BarChart
 
 export default function Layout({ children }) {
   const { t, lang } = useI18n();
-  const { isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -38,13 +38,14 @@ export default function Layout({ children }) {
     { to: "/kitchen", label: t("nav.kitchen"), icon: ChefHat },
     { to: "/community", label: t("nav.community"), icon: Users },
   ];
+  const isAdmin = user?.role === "admin";
   const secondaryLinks = [
     { to: "/favorites", label: t("nav.favorites"), icon: Heart },
     { to: "/planner", label: t("nav.planner"), icon: CalendarDays },
     { to: "/submit", label: t("nav.submit"), icon: PenSquare },
     { to: "/history", label: t("nav.history"), icon: History },
     { to: "/dashboard", label: t("nav.dashboard"), icon: BarChart3 },
-    { to: "/admin", label: t("nav.admin"), icon: Shield },
+    ...(isAdmin ? [{ to: "/admin", label: t("nav.admin"), icon: Shield }] : []),
   ];
   const allLinks = [...primaryLinks, { to: "/scan", label: t("nav.scan"), icon: ScanLine }, ...secondaryLinks];
 
