@@ -31,24 +31,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 190px;
+  min-height: clamp(300px, 56vh, 520px);
+  width: min(82vw, 520px);
 }
 
 .splash-logo {
   position: relative;
   z-index: 2;
+  width: min(78vw, 420px);
+  height: auto;
   opacity: 0;
   transform: translateY(14px) scale(0.94);
   animation: logoEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.38s forwards;
   filter: drop-shadow(0 18px 28px rgba(0, 54, 50, 0.16));
-}
-
-.splash-logo > span {
-  align-items: center;
-}
-
-.splash-logo span[style*="font-size"] {
-  letter-spacing: 0;
 }
 
 .seed-dot {
@@ -82,7 +77,7 @@
   position: absolute;
   z-index: 3;
   top: 16px;
-  right: 30px;
+  right: clamp(34px, 12vw, 92px);
   color: #f27b24;
   font-size: 34px;
   line-height: 1;
@@ -206,8 +201,8 @@
   }
 
   .logo-stage {
-    min-height: 170px;
-    transform: scale(0.88);
+    min-height: 300px;
+    width: min(88vw, 360px);
   }
 
   .splash-tagline {

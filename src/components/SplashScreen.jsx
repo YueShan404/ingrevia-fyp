@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import Logo from "@/components/Logo";
 import "@/components/SplashScreen.css";
 
 export default function SplashScreen({ onFinish, minDuration = 2600 }) {
@@ -28,7 +27,7 @@ export default function SplashScreen({ onFinish, minDuration = 2600 }) {
         <div className="logo-stage">
           <div className="seed-dot" />
           <div className="logo-glow" />
-          <Logo size={96} showTagline className="splash-logo" />
+          <img src="/ingrevia-logo.png" alt="Ingrevia 食知途" className="splash-logo" />
           <div className="sparkle-mark" aria-hidden="true">✦</div>
         </div>
         <p className="splash-tagline">

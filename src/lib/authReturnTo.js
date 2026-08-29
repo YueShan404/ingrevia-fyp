@@ -11,8 +11,11 @@ export function safeReturnTo() {
   const raw = new URLSearchParams(window.location.search).get("returnTo");
   if (!raw) return "/";
   try {
-    const url = new URL(raw, window.location.origin);
-    if (url.origin !== window.location.origin) return "/";
+    const appOrigin = getAppOrigin();
+    const url = new URL(raw, appOrigin || window.location.origin);
+    const allowedOrigins = new Set([window.location.origin]);
+    if (appOrigin) allowedOrigins.add(appOrigin);
+    if (!allowedOrigins.has(url.origin)) return "/";
     for (const p of ["access_token", "clear_access_token", "app_id", "app_base_url", "functions_version", "from_url"]) {
       url.searchParams.delete(p);
     }
@@ -27,4 +30,49 @@ export function safeReturnTo() {
 
 export function isAuthPath(pathname) {
   return ["/login", "/register", "/forgot-password", "/reset-password"].includes(pathname);
+}
+
+export function getAppOrigin() {
+  const appUrl = import.meta.env.VITE_APP_URL;
+  if (!appUrl) return "";
+  try {
+    return new URL(appUrl).origin;
+  } catch {
+    return "";
+  }
+}
+
+export function recoverMisroutedProductionUrl() {
+  const appOrigin = getAppOrigin();
+  if (!appOrigin || window.location.origin === appOrigin) return false;
+
+  const current = window.location.href;
+  const decoded = safeDecode(current);
+  if (!decoded.includes(appOrigin)) return false;
+
+  const recovered = extractAppUrl(decoded, appOrigin);
+  if (!recovered) return false;
+
+  window.location.replace(recovered);
+  return true;
+}
+
+function safeDecode(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function extractAppUrl(value, appOrigin) {
+  const start = value.indexOf(appOrigin);
+  if (start < 0) return "";
+  let rest = value.slice(start + appOrigin.length);
+  rest = rest.replace(/^\/\*\*/, "").replace(/^\s+/, "");
+  rest = rest.replace(/\/\*\*#?$/, "");
+  rest = rest.replace(/\*\*#?$/, "");
+  if (!rest || rest === "#") return appOrigin + "/";
+  if (!rest.startsWith("/")) rest = "/" + rest;
+  return appOrigin + rest;
 }
