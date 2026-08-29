@@ -28,21 +28,14 @@ export default function SplashScreen({ onFinish, minDuration = 3800 }) {
         }
       }}
     >
-      <div className="storyboard-wave storyboard-wave-left" />
-      <div className="storyboard-wave storyboard-wave-right" />
-
       <div className="splash-content">
         <div className="logo-wrapper">
-          <div className="seed-dot" />
-          <div className="logo-glow" />
-          <img src="/ingrevia-logo.png" alt="Ingrevia 食知途" className="splash-logo" />
-          <span className="spark spark-1" aria-hidden="true">✦</span>
-          <span className="spark spark-2" aria-hidden="true">✦</span>
-          <span className="spark spark-3" aria-hidden="true">✦</span>
+          <img src="/ingrevia-brand.png" alt="Ingrevia 食知途" className="splash-logo" />
+          <span className="splash-seed" aria-hidden="true" />
+          <span className="splash-symbol-mask" aria-hidden="true" />
+          <span className="splash-spark" aria-hidden="true">✦</span>
+          <span className="splash-brand-mask" aria-hidden="true" />
         </div>
-        <p className="splash-tagline">
-          Your Journey from <span className="ingredient-word">Ingredient</span> to <span className="insight-word">Insight.</span>
-        </p>
       </div>
     </div>
   );

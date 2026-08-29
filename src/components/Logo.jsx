@@ -28,15 +28,15 @@ export default function Logo({ size = 36, showWordmark = true, showTagline = fal
       {showWordmark && (
         <span>
           <span
-            className="font-display font-extrabold tracking-tight"
-            style={{ color: "#241052", fontSize: Math.round(size * 0.6) }}
+            className="font-display font-extrabold"
+            style={{ color: "#2d1165", fontSize: Math.round(size * 0.68), letterSpacing: 0 }}
           >
-            ingrevia
+            Ingrevia
           </span>
           {showTagline && (
             <span
               className="block font-semibold tracking-[0.28em] mt-1"
-              style={{ color: "#241052", opacity: 0.72, fontSize: Math.max(8, Math.round(size * 0.18)) }}
+              style={{ color: "#2d1165", opacity: 0.72, fontSize: Math.max(8, Math.round(size * 0.18)) }}
             >
               {TAGLINES[lang] || TAGLINES.en}
             </span>
