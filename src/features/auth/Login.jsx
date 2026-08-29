@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,15 +27,23 @@ export default function Login() {
     try {
       await appApi.auth.loginViaEmailPassword(email, password);
       window.location.href = returnTo;
-    } catch (err) {
-      setError(err.message || "Invalid email or password");
+    } catch {
+      const registerUrl = `/register?email=${encodeURIComponent(email)}${returnTo !== "/" ? `&returnTo=${encodeURIComponent(returnTo)}` : ""}`;
+      navigate(registerUrl, {
+        replace: true,
+        state: {
+          authNotice: "Please register or verify your email before logging in.",
+        },
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogle = () => {
-    appApi.auth.loginWithProvider("google", returnTo);
+    navigate(`/register${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`, {
+      state: { authNotice: "Please register first. You can use Google on the register page." },
+    });
   };
 
   return (
@@ -60,7 +69,7 @@ export default function Login() {
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
-        Enter Ingrevia with Google
+        Register first to use Google
       </Button>
 
       <div className="relative mb-6">
