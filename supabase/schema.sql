@@ -128,6 +128,13 @@ alter table public.recipes enable row level security;
 alter table public.community_recipes enable row level security;
 alter table public.scan_history enable row level security;
 
+grant usage on schema public to anon, authenticated;
+grant select on public.ingredients to anon, authenticated;
+grant select on public.recipes to anon, authenticated;
+grant select on public.community_recipes to anon, authenticated;
+grant insert on public.community_recipes to authenticated;
+grant select, insert, delete on public.scan_history to authenticated;
+
 create policy "Public can read ingredients" on public.ingredients for select using (true);
 create policy "Public can read recipes" on public.recipes for select using (true);
 create policy "Public can read approved community recipes" on public.community_recipes

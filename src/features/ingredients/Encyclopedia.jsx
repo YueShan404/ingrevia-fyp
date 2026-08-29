@@ -9,14 +9,20 @@ export default function Encyclopedia() {
   const { t } = useI18n();
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
 
   useEffect(() => {
+    setLoadError("");
     appApi.entities.Ingredient.list().then((data) => {
       setIngredients(data || []);
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch((error) => {
+      console.error("Failed to load ingredients:", error);
+      setLoadError(error?.message || "Unable to load ingredient data.");
+      setLoading(false);
+    });
   }, []);
 
   const categories = ["all", "herb", "vegetable", "fruit", "spice", "seafood", "grain", "legume", "other"];
@@ -70,6 +76,10 @@ export default function Encyclopedia() {
         {/* Grid */}
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[hsl(126,24%,44%)]" /></div>
+        ) : loadError ? (
+          <div className="max-w-xl mx-auto text-center rounded-2xl border border-destructive/20 bg-destructive/10 px-5 py-4 text-sm text-destructive">
+            {loadError}
+          </div>
         ) : filtered.length === 0 ? (
           <p className="text-center text-muted-foreground py-20">{t("common.no_results")}</p>
         ) : (
