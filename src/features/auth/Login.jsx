@@ -17,6 +17,7 @@ export default function Login() {
   // Post-login destination (e.g. the MCP OAuth consent page sends users here
   // with returnTo so the grant flow can resume). Same-origin paths only.
   const returnTo = safeReturnTo();
+  const authError = new URLSearchParams(window.location.search).get("authError");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -74,6 +75,12 @@ export default function Login() {
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
           {error}
+        </div>
+      )}
+
+      {authError === "oauth_expired" && !error && (
+        <div className="mb-4 p-3 rounded-lg bg-amber-50 text-amber-800 text-sm">
+          Google login expired. Please enter Ingrevia again.
         </div>
       )}
 

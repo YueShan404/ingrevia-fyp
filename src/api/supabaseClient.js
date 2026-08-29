@@ -93,12 +93,15 @@ export const appApi = {
         throw new Error("Authentication required");
       }
 
+      const metadataRole = user.user_metadata?.role;
+      const role = isAdminEmail(user.email) ? "admin" : metadataRole || "user";
+
       return {
         id: user.id,
         email: user.email,
-        role: user.user_metadata?.role || (isAdminEmail(user.email) ? "admin" : "user"),
         full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
         ...user.user_metadata,
+        role,
       };
     },
 

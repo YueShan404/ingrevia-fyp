@@ -47,6 +47,17 @@ export function getCanonicalLoginUrl(returnTo = "/") {
   return appOrigin ? `${appOrigin}${loginPath}` : loginPath;
 }
 
+export function recoverAuthCallbackErrorUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const errorCode = params.get("error_code");
+  if (errorCode !== "bad_oauth_state") return false;
+
+  const appOrigin = getAppOrigin();
+  const loginPath = "/login?authError=oauth_expired";
+  window.location.replace(appOrigin ? `${appOrigin}${loginPath}` : loginPath);
+  return true;
+}
+
 export function recoverMisroutedProductionUrl() {
   const appOrigin = getAppOrigin();
   if (!appOrigin || window.location.origin === appOrigin) return false;
