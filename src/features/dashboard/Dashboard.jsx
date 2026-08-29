@@ -4,7 +4,8 @@ import { appApi } from "@/api/supabaseClient";
 import { useI18n, localized } from "@/lib/i18n";
 import { useFavorites, useZeroWaste } from "@/lib/favorites";
 import Layout from "@/components/Layout";
-import { BarChart3, Recycle, ChefHat, TrendingUp, Check, Loader2 } from "lucide-react";
+import IngreviaLoader from "@/components/IngreviaLoader";
+import { BarChart3, Recycle, ChefHat, TrendingUp, Check } from "lucide-react";
 
 export default function Dashboard() {
   const { t, lang } = useI18n();
@@ -68,7 +69,7 @@ export default function Dashboard() {
         {/* Saved recipes list */}
         <h2 className="font-heading font-bold text-lg mb-4">{t("dashboard.your_recipes")}</h2>
         {loading ? (
-          <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-[hsl(126,24%,44%)]" /></div>
+          <IngreviaLoader compact message={t("loading.dashboard")} />
         ) : savedRecipes.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-3">{t("dashboard.no_saved")}</p>

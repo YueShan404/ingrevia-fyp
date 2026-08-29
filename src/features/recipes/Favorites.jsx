@@ -6,7 +6,8 @@ import { useFavorites, useCommunityFavorites } from "@/lib/favorites";
 import Layout from "@/components/Layout";
 import RecipeCard from "@/components/RecipeCard";
 import CommunityRecipeCard from "@/components/CommunityRecipeCard";
-import { Heart, Bookmark, Loader2, Users } from "lucide-react";
+import IngreviaLoader from "@/components/IngreviaLoader";
+import { Heart, Bookmark, Users } from "lucide-react";
 
 export default function Favorites() {
   const { t } = useI18n();
@@ -39,9 +40,7 @@ export default function Favorites() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
+          <IngreviaLoader compact message={t("loading.favorites")} />
         ) : recipes.length === 0 && communityRecipes.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 mx-auto rounded-full bg-secondary flex items-center justify-center mb-4">

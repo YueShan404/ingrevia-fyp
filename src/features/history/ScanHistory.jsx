@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
 import { useI18n } from "@/lib/i18n";
 import Layout from "@/components/Layout";
-import { History as HistoryIcon, Trash2, Loader2, ArrowRight } from "lucide-react";
+import IngreviaLoader from "@/components/IngreviaLoader";
+import { History as HistoryIcon, Trash2, ArrowRight } from "lucide-react";
 
 export default function ScanHistoryPage() {
   const { t } = useI18n();
@@ -47,7 +48,7 @@ export default function ScanHistoryPage() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[hsl(126,24%,44%)]" /></div>
+          <IngreviaLoader compact message={t("loading.history")} />
         ) : history.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-20 h-20 mx-auto rounded-full bg-secondary flex items-center justify-center mb-4">

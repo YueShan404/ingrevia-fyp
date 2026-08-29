@@ -4,7 +4,8 @@ import { appApi } from "@/api/supabaseClient";
 import { useI18n } from "@/lib/i18n";
 import Layout from "@/components/Layout";
 import CommunityRecipeCard from "@/components/CommunityRecipeCard";
-import { Users, Search, Loader2, PenSquare, Heart } from "lucide-react";
+import IngreviaLoader from "@/components/IngreviaLoader";
+import { Users, Search, PenSquare, Heart } from "lucide-react";
 
 export default function Community() {
   const { t } = useI18n();
@@ -98,9 +99,7 @@ export default function Community() {
 
         {/* Menu list */}
         {loading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          </div>
+          <IngreviaLoader compact message={t("loading.community")} />
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <Heart className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />

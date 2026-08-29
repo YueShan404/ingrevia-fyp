@@ -3,8 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
 import { useI18n, localized } from "@/lib/i18n";
 import Layout from "@/components/Layout";
-import { ScanLine, Upload, Camera, Loader2, Search, ArrowRight, Image as ImageIcon } from "lucide-react";
+import { ScanLine, Upload, Camera, Search, ArrowRight, Image as ImageIcon } from "lucide-react";
 import ScanResultCard from "@/components/ScanResultCard";
+import IngreviaLoader from "@/components/IngreviaLoader";
 
 export default function Scanner() {
   const { t, lang } = useI18n();
@@ -136,15 +137,15 @@ export default function Scanner() {
             <div className="relative">
               <img src={imagePreview} alt="scan" className="w-full max-h-80 object-contain bg-black/5" />
               {analyzing && (
-                <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center text-white">
-                  <Loader2 className="w-10 h-10 animate-spin mb-3" />
-                  <p className="font-medium">
-                    {analysisPhase === "uploading"
+                <div className="absolute inset-0 bg-white/88 backdrop-blur-sm flex items-center justify-center">
+                  <IngreviaLoader
+                    compact
+                    message={analysisPhase === "uploading"
                       ? t("scanner.step_uploading")
                       : analysisPhase === "analyzing"
                         ? t("scanner.step_analyzing")
                         : t("scanner.analyzing")}
-                  </p>
+                  />
                 </div>
               )}
             </div>

@@ -2,12 +2,13 @@ import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import IngreviaLoader from '@/components/IngreviaLoader';
+import { useI18n } from '@/lib/i18n';
 
-const DefaultFallback = () => (
-  <div className="fixed inset-0 flex items-center justify-center">
-    <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
-  </div>
-);
+const DefaultFallback = () => {
+  const { t } = useI18n();
+  return <IngreviaLoader message={t("loading.access")} fullScreen />;
+};
 
 export default function ProtectedRoute({ children, fallback = <DefaultFallback />, unauthenticatedElement }) {
   const { isAuthenticated, isLoadingAuth, authChecked, authError, checkUserAuth } = useAuth();

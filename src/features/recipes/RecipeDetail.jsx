@@ -5,7 +5,8 @@ import { useI18n, localized } from "@/lib/i18n";
 import { useFavorites, useZeroWaste } from "@/lib/favorites";
 import Layout from "@/components/Layout";
 import SpeakButton from "@/components/SpeakButton";
-import { ArrowLeft, Clock, ChefHat, Users, Heart, Recycle, Check, Loader2, Flame } from "lucide-react";
+import IngreviaLoader from "@/components/IngreviaLoader";
+import { ArrowLeft, Clock, ChefHat, Users, Heart, Recycle, Check, Flame } from "lucide-react";
 
 export default function RecipeDetail() {
   const { id } = useParams();
@@ -24,7 +25,7 @@ export default function RecipeDetail() {
     }).catch(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <Layout><div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[hsl(126,24%,44%)]" /></div></Layout>;
+  if (loading) return <Layout><IngreviaLoader compact message={t("loading.recipe_detail")} /></Layout>;
   if (!recipe) return <Layout><div className="text-center py-20"><p className="text-muted-foreground">Not found</p></div></Layout>;
 
   const title = localized(recipe, "title", lang);

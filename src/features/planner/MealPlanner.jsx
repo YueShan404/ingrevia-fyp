@@ -3,7 +3,8 @@ import { appApi } from "@/api/supabaseClient";
 import { useI18n, localized } from "@/lib/i18n";
 import { useFavorites } from "@/lib/favorites";
 import Layout from "@/components/Layout";
-import { CalendarDays, Trash2, ChefHat, Loader2, GripVertical } from "lucide-react";
+import IngreviaLoader from "@/components/IngreviaLoader";
+import { CalendarDays, Trash2, ChefHat, GripVertical } from "lucide-react";
 
 const PLAN_KEY = "ingrevia_meal_plan";
 
@@ -67,7 +68,7 @@ export default function MealPlanner() {
               <ChefHat className="w-4 h-4 text-[hsl(126,24%,44%)]" /> {t("planner.tray")}
             </h2>
             {loading ? (
-              <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-[hsl(126,24%,44%)]" /></div>
+              <IngreviaLoader compact message={t("loading.planner")} />
             ) : favRecipes.length === 0 ? (
               <p className="text-xs text-muted-foreground py-4">{t("planner.tray_empty")}</p>
             ) : (

@@ -4,7 +4,8 @@ import { appApi } from "@/api/supabaseClient";
 import { useI18n } from "@/lib/i18n";
 import Layout from "@/components/Layout";
 import RecipeCard from "@/components/RecipeCard";
-import { ChefHat, Loader2, Clock } from "lucide-react";
+import IngreviaLoader from "@/components/IngreviaLoader";
+import { ChefHat, Clock } from "lucide-react";
 
 export default function LittleKitchen() {
   const { t } = useI18n();
@@ -70,7 +71,7 @@ export default function LittleKitchen() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[hsl(126,24%,44%)]" /></div>
+          <IngreviaLoader compact message={t("loading.recipes")} />
         ) : filtered.length === 0 ? (
           <p className="text-center text-muted-foreground py-20">{t("common.no_results")}</p>
         ) : (

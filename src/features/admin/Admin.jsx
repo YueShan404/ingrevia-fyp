@@ -3,8 +3,9 @@ import { appApi } from "@/api/supabaseClient";
 import { useI18n, localized } from "@/lib/i18n";
 import { useAuth } from "@/lib/AuthContext";
 import Layout from "@/components/Layout";
+import IngreviaLoader from "@/components/IngreviaLoader";
 import { useToast } from "@/components/ui/use-toast";
-import { Shield, Trash2, Check, X, Loader2, BookOpen, ChefHat, Users, Upload } from "lucide-react";
+import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload } from "lucide-react";
 
 export default function Admin() {
   const { t, lang } = useI18n();
@@ -129,7 +130,7 @@ export default function Admin() {
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[hsl(126,24%,44%)]" /></div>
+          <IngreviaLoader compact message={t("loading.admin")} />
         ) : tab === "ingredients" ? (
           <>
             <div className="flex flex-col items-end gap-1.5 mb-4">

@@ -5,8 +5,9 @@ import { useI18n } from "@/lib/i18n";
 import { useCommunityFavorites } from "@/lib/favorites";
 import Layout from "@/components/Layout";
 import SpeakButton from "@/components/SpeakButton";
+import IngreviaLoader from "@/components/IngreviaLoader";
 import { Image } from "@/components/ui/image";
-import { ArrowLeft, Clock, Bookmark, Recycle, ChefHat, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Clock, Bookmark, Recycle, ChefHat, Sparkles } from "lucide-react";
 
 export default function CommunityRecipeDetail() {
   const { id } = useParams();
@@ -28,9 +29,7 @@ export default function CommunityRecipeDetail() {
   if (loading)
     return (
       <Layout>
-        <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
+        <IngreviaLoader compact message={t("loading.community_detail")} />
       </Layout>
     );
 

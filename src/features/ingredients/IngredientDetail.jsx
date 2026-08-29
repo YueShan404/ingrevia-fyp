@@ -6,8 +6,9 @@ import Layout from "@/components/Layout";
 import HealthAdvisory from "@/components/HealthAdvisory";
 import RecipeCard from "@/components/RecipeCard";
 import SpeakButton from "@/components/SpeakButton";
+import IngreviaLoader from "@/components/IngreviaLoader";
 import { NUTRITION_FIELDS } from "@/lib/healthAdvisory";
-import { ArrowLeft, BookOpen, Sparkles, ChefHat, Loader2 } from "lucide-react";
+import { ArrowLeft, BookOpen, Sparkles, ChefHat } from "lucide-react";
 
 export default function IngredientDetail() {
   const { id } = useParams();
@@ -33,7 +34,7 @@ export default function IngredientDetail() {
     }).catch(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <Layout><div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[hsl(126,24%,44%)]" /></div></Layout>;
+  if (loading) return <Layout><IngreviaLoader compact message={t("loading.nutrition")} /></Layout>;
   if (!ingredient) return <Layout><div className="text-center py-20"><p className="text-muted-foreground">Not found</p><Link to="/encyclopedia" className="text-[hsl(126,24%,28%)] hover:underline mt-2 inline-block">← {t("nav.encyclopedia")}</Link></div></Layout>;
 
   const name = localized(ingredient, "name", lang);

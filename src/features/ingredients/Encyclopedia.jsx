@@ -3,7 +3,8 @@ import { appApi } from "@/api/supabaseClient";
 import { useI18n } from "@/lib/i18n";
 import Layout from "@/components/Layout";
 import IngredientCard from "@/components/IngredientCard";
-import { BookOpen, Search, Loader2 } from "lucide-react";
+import IngreviaLoader from "@/components/IngreviaLoader";
+import { BookOpen, Search } from "lucide-react";
 
 export default function Encyclopedia() {
   const { t } = useI18n();
@@ -75,7 +76,7 @@ export default function Encyclopedia() {
 
         {/* Grid */}
         {loading ? (
-          <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-[hsl(126,24%,44%)]" /></div>
+          <IngreviaLoader compact message={t("loading.ingredients")} />
         ) : loadError ? (
           <div className="max-w-xl mx-auto text-center rounded-2xl border border-destructive/20 bg-destructive/10 px-5 py-4 text-sm text-destructive">
             {loadError}
