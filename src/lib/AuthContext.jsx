@@ -45,8 +45,8 @@ export const AuthProvider = ({ children }) => {
       setAuthChecked(true);
       
       setAuthError({
-        type: 'auth_required',
-        message: 'Authentication required'
+        type: error?.type || 'auth_required',
+        message: error?.message || 'Authentication required'
       });
     }
   };

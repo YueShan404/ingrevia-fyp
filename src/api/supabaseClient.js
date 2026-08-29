@@ -77,6 +77,12 @@ const getRedirectUrl = (returnTo = "/") => {
   return new URL(returnTo, baseUrl).toString();
 };
 
+const createAuthError = (type, message) => {
+  const error = new Error(message);
+  error.type = type;
+  return error;
+};
+
 export const appApi = {
   entities: {
     Ingredient: createEntityApi("Ingredient"),
@@ -93,13 +99,35 @@ export const appApi = {
         throw new Error("Authentication required");
       }
 
-      const metadataRole = user.user_metadata?.role;
-      const role = isAdminEmail(user.email) ? "admin" : metadataRole || "user";
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role,status,full_name,email")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+      if (!profile) {
+        await supabase.auth.signOut();
+        throw createAuthError("profile_required", "Please register before logging in.");
+      }
+
+      if (profile.status !== "active") {
+        await supabase.auth.signOut();
+        throw createAuthError(
+          profile.status === "blocked" ? "account_blocked" : "account_pending",
+          profile.status === "blocked"
+            ? "This account is blocked. Please contact the administrator."
+            : "Your account is pending approval."
+        );
+      }
+
+      const role = isAdminEmail(user.email) ? "admin" : profile.role || user.user_metadata?.role || "user";
 
       return {
         id: user.id,
         email: user.email,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email,
+        status: profile.status,
+        full_name: profile.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email,
         ...user.user_metadata,
         role,
       };
