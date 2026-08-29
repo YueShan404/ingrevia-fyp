@@ -59,7 +59,7 @@ export default function Layout({ children }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16 gap-2">
             <Link to="/" className="flex items-center shrink-0 group">
-              <Logo size={34} showTagline />
+              <Logo size={34} showTagline lang={lang} />
             </Link>
 
             {/* Desktop nav */}
@@ -119,7 +119,7 @@ export default function Layout({ children }) {
                     onClick={() => logout(false)}
                     className="px-4 py-2 rounded-full text-sm font-semibold text-foreground/75 hover:bg-secondary hover:text-foreground transition-colors"
                   >
-                    Logout
+                    {t("auth.logout")}
                   </button>
                 ) : (
                   <>
@@ -127,13 +127,13 @@ export default function Layout({ children }) {
                       to="/login"
                       className="px-4 py-2 rounded-full text-sm font-semibold text-foreground/75 hover:bg-secondary hover:text-foreground transition-colors"
                     >
-                      Login
+                      {t("auth.login")}
                     </Link>
                     <Link
                       to="/register"
                       className="px-4 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg transition-all"
                     >
-                      Register
+                      {t("auth.register")}
                     </Link>
                   </>
                 )}
@@ -164,7 +164,7 @@ export default function Layout({ children }) {
         aria-hidden={!mobileOpen}
       >
         <div className="flex items-center justify-between p-4 border-b border-border/40 bg-secondary/30">
-          <Logo size={32} />
+          <Logo size={32} lang={lang} />
           <button onClick={() => setMobileOpen(false)} className="p-2 rounded-full hover:bg-secondary transition-colors" aria-label={t("common.close")}>
             <X className="w-5 h-5" />
           </button>
@@ -179,15 +179,15 @@ export default function Layout({ children }) {
                 }}
                 className="col-span-2 px-4 py-3 rounded-2xl text-sm font-semibold bg-secondary text-foreground"
               >
-                Logout
+                {t("auth.logout")}
               </button>
             ) : (
               <>
                 <Link to="/login" onClick={() => setMobileOpen(false)} className="px-4 py-3 rounded-2xl text-sm font-semibold bg-secondary text-center">
-                  Login
+                  {t("auth.login")}
                 </Link>
                 <Link to="/register" onClick={() => setMobileOpen(false)} className="px-4 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground text-center">
-                  Register
+                  {t("auth.register")}
                 </Link>
               </>
             )}

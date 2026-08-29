@@ -148,7 +148,7 @@ export default function Register() {
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
+        Enter Ingrevia with Google
       </Button>
 
       <div className="relative mb-6">

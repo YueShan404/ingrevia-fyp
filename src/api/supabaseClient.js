@@ -8,7 +8,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn("Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Add them to .env.local.");
 }
 
-export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "");
+export const supabase = createClient(supabaseUrl || "", supabaseAnonKey || "", {
+  auth: {
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
 const tableByEntity = {
   Ingredient: "ingredients",
@@ -64,7 +70,10 @@ const createEntityApi = (entityName) => {
   };
 };
 
-const getRedirectUrl = (returnTo = "/") => new URL(returnTo, window.location.origin).toString();
+const getRedirectUrl = (returnTo = "/") => {
+  const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+  return new URL(returnTo, baseUrl).toString();
+};
 
 export const appApi = {
   entities: {

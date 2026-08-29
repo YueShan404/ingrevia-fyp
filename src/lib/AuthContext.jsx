@@ -35,6 +35,7 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await appApi.auth.me();
       setUser(currentUser);
       setIsAuthenticated(true);
+      setAuthError(null);
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {

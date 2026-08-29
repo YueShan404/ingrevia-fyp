@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -9,6 +9,7 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import ScrollToTop from '@/components/ScrollToTop';
 import LoadingScreen from '@/components/LoadingScreen';
+import SplashScreen from '@/components/SplashScreen';
 import { appRoutes } from '@/app/routes';
 import { isAuthPath } from '@/lib/authReturnTo';
 import { I18nProvider } from '@/lib/i18n';
@@ -46,12 +47,15 @@ const AuthenticatedApp = () => {
 };
 
 function App() {
+  const [showSplash, setShowSplash] = useState(true);
+
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <I18nProvider>
             <AccessibilityProvider>
+              {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
               <ScrollToTop />
               <AuthenticatedApp />
             </AccessibilityProvider>

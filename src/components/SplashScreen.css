@@ -1,0 +1,217 @@
+.splash-container {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.98) 0%, rgba(250, 255, 247, 0.94) 42%, rgba(246, 242, 235, 0.9) 100%),
+    linear-gradient(135deg, #fffaf2 0%, #f5fbef 52%, #fff3e9 100%);
+}
+
+.splash-container.fade-out {
+  animation: splashExit 0.5s ease-out forwards;
+}
+
+.splash-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(90vw, 560px);
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.logo-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 190px;
+}
+
+.splash-logo {
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  transform: translateY(14px) scale(0.94);
+  animation: logoEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.38s forwards;
+  filter: drop-shadow(0 18px 28px rgba(0, 54, 50, 0.16));
+}
+
+.splash-logo > span {
+  align-items: center;
+}
+
+.splash-logo span[style*="font-size"] {
+  letter-spacing: 0;
+}
+
+.seed-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #39b54a;
+  box-shadow: 0 0 24px rgba(57, 181, 74, 0.35);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.2);
+  animation: seedPop 0.38s ease-out forwards;
+}
+
+.logo-glow {
+  position: absolute;
+  inset: 12px 0 0;
+  margin: auto;
+  width: 210px;
+  height: 130px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(141, 198, 63, 0.28), rgba(255, 255, 255, 0) 68%);
+  opacity: 0;
+  transform: scale(0.7);
+  animation: glowRise 1s ease-out 0.7s forwards;
+}
+
+.sparkle-mark {
+  position: absolute;
+  z-index: 3;
+  top: 16px;
+  right: 30px;
+  color: #f27b24;
+  font-size: 34px;
+  line-height: 1;
+  opacity: 0;
+  transform: rotate(-12deg) scale(0.35);
+  animation: sparkPop 0.58s cubic-bezier(0.18, 0.9, 0.28, 1.25) 1.05s forwards;
+  text-shadow: 0 0 20px rgba(242, 123, 36, 0.28);
+}
+
+.splash-tagline {
+  max-width: 420px;
+  margin: 28px 0 0;
+  color: #003632;
+  font-size: clamp(1rem, 2.6vw, 1.2rem);
+  font-weight: 600;
+  line-height: 1.55;
+  opacity: 0;
+  transform: translateY(10px);
+  animation: textFadeIn 0.45s ease-out 1.35s forwards;
+}
+
+.splash-tagline span {
+  color: #39b54a;
+  font-weight: 800;
+}
+
+.splash-tagline strong {
+  color: #c0521f;
+}
+
+.storyboard-wave {
+  position: absolute;
+  bottom: -92px;
+  width: min(70vw, 660px);
+  height: 210px;
+  border-radius: 54% 46% 0 0;
+  opacity: 0.35;
+}
+
+.storyboard-wave-left {
+  left: -12vw;
+  background: linear-gradient(90deg, rgba(57, 181, 74, 0.22), rgba(141, 198, 63, 0.06));
+  transform: rotate(8deg);
+}
+
+.storyboard-wave-right {
+  right: -10vw;
+  background: linear-gradient(90deg, rgba(192, 82, 31, 0.06), rgba(192, 82, 31, 0.2));
+  transform: rotate(-7deg);
+}
+
+@keyframes seedPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.8);
+  }
+}
+
+@keyframes logoEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.94);
+    filter: blur(6px) drop-shadow(0 0 0 rgba(0, 54, 50, 0));
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 18px 28px rgba(0, 54, 50, 0.16));
+  }
+}
+
+@keyframes glowRise {
+  45% {
+    opacity: 0.9;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+}
+
+@keyframes sparkPop {
+  60% {
+    opacity: 1;
+    transform: rotate(8deg) scale(1.16);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@keyframes textFadeIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes splashExit {
+  to {
+    opacity: 0;
+    transform: scale(1.02);
+    visibility: hidden;
+  }
+}
+
+@media (max-width: 520px) {
+  .splash-content {
+    width: min(92vw, 360px);
+    padding: 32px 18px;
+  }
+
+  .logo-stage {
+    min-height: 170px;
+    transform: scale(0.88);
+  }
+
+  .splash-tagline {
+    margin-top: 18px;
+    font-size: 0.95rem;
+  }
+}
