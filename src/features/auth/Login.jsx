@@ -20,6 +20,7 @@ export default function Login() {
   // Post-login destination (e.g. the MCP OAuth consent page sends users here
   // with returnTo so the grant flow can resume). Same-origin paths only.
   const returnTo = safeReturnTo();
+  const destination = returnTo === "/" ? "/profile" : returnTo;
   const authError = new URLSearchParams(window.location.search).get("authError");
 
   const handleSubmit = async (e) => {
@@ -29,13 +30,13 @@ export default function Login() {
     try {
       await appApi.auth.loginViaEmailPassword(email, password);
       await checkUserAuth();
-      navigate(returnTo, { replace: true });
+      navigate(destination, { replace: true });
     } catch (err) {
       if (err?.type === "account_pending" || err?.type === "account_blocked" || err?.type === "profile_required") {
         setError(err.message);
         return;
       }
-      const registerUrl = `/register?email=${encodeURIComponent(email)}${returnTo !== "/" ? `&returnTo=${encodeURIComponent(returnTo)}` : ""}`;
+      const registerUrl = `/register?email=${encodeURIComponent(email)}${destination !== "/" ? `&returnTo=${encodeURIComponent(destination)}` : ""}`;
       navigate(registerUrl, {
         replace: true,
         state: {
@@ -48,7 +49,7 @@ export default function Login() {
   };
 
   const handleGoogle = () => {
-    appApi.auth.loginWithProvider("google", returnTo);
+    appApi.auth.loginWithProvider("google", destination);
   };
 
   return (
@@ -60,7 +61,7 @@ export default function Login() {
         <>
           Don't have an account?{" "}
           <Link
-            to={"/register" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}
+            to={"/register" + (destination !== "/" ? "?returnTo=" + encodeURIComponent(destination) : "")}
             className="text-primary font-medium hover:underline"
           >
             Create one

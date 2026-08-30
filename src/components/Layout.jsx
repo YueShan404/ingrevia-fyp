@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "./LanguageSwitcher";
 import AccessibilityPanel from "./AccessibilityPanel";
-import { Menu, X, ScanLine, BookOpen, ChefHat, Home as HomeIcon, Heart, BarChart3, Users, CalendarDays, PenSquare, History, Shield, ChevronDown } from "lucide-react";
+import { Menu, X, ScanLine, BookOpen, ChefHat, Home as HomeIcon, Heart, BarChart3, Users, CalendarDays, PenSquare, History, Shield, ChevronDown, UserCircle } from "lucide-react";
 
 export default function Layout({ children }) {
   const { t, lang } = useI18n();
@@ -116,12 +116,25 @@ export default function Layout({ children }) {
               </Link>
               <div className="hidden sm:flex items-center gap-2">
                 {isAuthenticated ? (
-                  <button
-                    onClick={() => logout(false)}
-                    className="px-4 py-2 rounded-full text-sm font-semibold text-foreground/75 hover:bg-secondary hover:text-foreground transition-colors"
-                  >
-                    {t("auth.logout")}
-                  </button>
+                  <>
+                    <Link
+                      to="/profile"
+                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                        isActive("/profile")
+                          ? "bg-secondary text-foreground"
+                          : "text-foreground/75 hover:bg-secondary hover:text-foreground"
+                      }`}
+                    >
+                      <UserCircle className="w-4 h-4" />
+                      {t("nav.profile")}
+                    </Link>
+                    <button
+                      onClick={() => logout(false)}
+                      className="px-4 py-2 rounded-full text-sm font-semibold text-foreground/75 hover:bg-secondary hover:text-foreground transition-colors"
+                    >
+                      {t("auth.logout")}
+                    </button>
+                  </>
                 ) : (
                   <>
                     <Link
@@ -173,15 +186,20 @@ export default function Layout({ children }) {
         <nav className="p-4 flex flex-col gap-1 overflow-y-auto max-h-[calc(100%-4.25rem)]">
           <div className="grid grid-cols-2 gap-2 mb-3 sm:hidden">
             {isAuthenticated ? (
-              <button
-                onClick={() => {
-                  setMobileOpen(false);
-                  logout(false);
-                }}
-                className="col-span-2 px-4 py-3 rounded-2xl text-sm font-semibold bg-secondary text-foreground"
-              >
-                {t("auth.logout")}
-              </button>
+              <>
+                <Link to="/profile" onClick={() => setMobileOpen(false)} className="px-4 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground text-center">
+                  {t("nav.profile")}
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    logout(false);
+                  }}
+                  className="px-4 py-3 rounded-2xl text-sm font-semibold bg-secondary text-foreground"
+                >
+                  {t("auth.logout")}
+                </button>
+              </>
             ) : (
               <>
                 <Link to="/login" onClick={() => setMobileOpen(false)} className="px-4 py-3 rounded-2xl text-sm font-semibold bg-secondary text-center">

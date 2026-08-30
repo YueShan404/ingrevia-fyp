@@ -23,6 +23,8 @@ export default function Register() {
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const authNotice = location.state?.authNotice;
+  const returnTo = safeReturnTo();
+  const destination = returnTo === "/" ? "/profile" : returnTo;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,7 +52,7 @@ export default function Register() {
       if (result?.access_token) {
         appApi.auth.setToken(result.access_token);
       }
-      window.location.href = safeReturnTo();
+      window.location.href = destination;
     } catch (err) {
       setError(err.message || "Invalid verification code");
     } finally {
@@ -72,7 +74,7 @@ export default function Register() {
   };
 
   const handleGoogle = () => {
-    appApi.auth.loginWithProvider("google", safeReturnTo());
+    appApi.auth.loginWithProvider("google", destination);
   };
 
   if (showOtp) {
@@ -138,7 +140,7 @@ export default function Register() {
         <>
           Already have an account?{" "}
           <Link
-            to={"/login" + (safeReturnTo() !== "/" ? "?returnTo=" + encodeURIComponent(safeReturnTo()) : "")}
+            to={"/login" + (destination !== "/" ? "?returnTo=" + encodeURIComponent(destination) : "")}
             className="text-primary font-medium hover:underline"
           >
             Log in

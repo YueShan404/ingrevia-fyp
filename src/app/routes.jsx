@@ -13,6 +13,7 @@ const SubmitRecipe = lazy(() => import('@/features/community/SubmitRecipe'));
 const CommunityRecipeDetail = lazy(() => import('@/features/community/CommunityRecipeDetail'));
 const MealPlanner = lazy(() => import('@/features/planner/MealPlanner'));
 const Dashboard = lazy(() => import('@/features/dashboard/Dashboard'));
+const Profile = lazy(() => import('@/features/profile/Profile'));
 const Admin = lazy(() => import('@/features/admin/Admin'));
 const Login = lazy(() => import('@/features/auth/Login'));
 const Register = lazy(() => import('@/features/auth/Register'));
@@ -37,5 +38,6 @@ export const appRoutes = [
   { path: '/community/:id', element: <CommunityRecipeDetail /> },
   { path: '/planner', element: <MealPlanner />, protected: true },
   { path: '/dashboard', element: <Dashboard />, protected: true },
+  { path: '/profile', element: <Profile />, protected: true },
   { path: '/admin', element: <Admin />, protected: true },
 ];
