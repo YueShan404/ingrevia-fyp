@@ -14,185 +14,50 @@
 }
 
 .splash-content {
-  width: min(72vw, 360px);
+  width: min(68vw, 340px);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .logo-wrapper {
-  position: relative;
   width: 100%;
   aspect-ratio: 784 / 910;
-  overflow: hidden;
 }
 
 .splash-logo {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: contain;
   opacity: 0;
-  transform: scale(0.97);
-  animation: splashLogoHold 0.01s linear 2.55s forwards, splashLogoSettle 0.65s ease 2.55s forwards;
+  transform: translateY(8px) scale(0.98);
+  animation: splashLogoEnter 0.8s ease forwards;
 }
 
-.splash-seed,
-.splash-symbol-mask,
-.splash-brand-mask,
-.splash-spark {
-  position: absolute;
-  pointer-events: none;
-}
-
-.splash-seed {
-  left: 39%;
-  top: 58%;
-  z-index: 2;
-  width: 3.2%;
-  aspect-ratio: 1;
-  border-radius: 999px;
-  background: #7138a8;
-  opacity: 0;
-  transform: scale(0);
-  animation: splashSeed 0.45s ease forwards;
-}
-
-.splash-symbol-mask {
-  left: 6%;
-  top: 2%;
-  z-index: 2;
-  width: 88%;
-  height: 72%;
-  border-radius: 50%;
-  background: conic-gradient(from 215deg, #7138a8, #d84487 48%, #ff8626 76%, transparent 76%);
-  clip-path: circle(0% at 40% 75%);
-  opacity: 0.22;
-  mix-blend-mode: multiply;
-  animation: splashSymbolReveal 2.15s cubic-bezier(0.2, 0.8, 0.2, 1) 0.25s forwards;
-}
-
-.splash-spark {
-  top: 23%;
-  right: 33%;
-  z-index: 3;
-  color: #ff8626;
-  font-size: clamp(22px, 4vw, 38px);
-  line-height: 1;
-  opacity: 0;
-  transform: scale(0) rotate(-25deg);
-  filter: drop-shadow(0 0 8px rgba(255, 134, 31, 0.35));
-  animation: splashSpark 0.55s cubic-bezier(0.17, 0.89, 0.32, 1.45) 1.72s forwards;
-}
-
-.splash-brand-mask {
-  left: 20%;
-  right: 17%;
-  bottom: 2%;
-  z-index: 2;
-  height: 26%;
-  background: linear-gradient(180deg, rgba(45, 17, 101, 0.12), rgba(45, 17, 101, 0));
-  opacity: 0;
-  transform: translateY(18px);
-  animation: splashBrandReveal 0.65s ease 2.2s forwards;
-}
-
-@keyframes splashSeed {
-  0% {
-    opacity: 0;
-    transform: scale(0);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.25);
-  }
-  100% {
-    opacity: 0.9;
-    transform: scale(1);
-  }
-}
-
-@keyframes splashSymbolReveal {
-  0% {
-    opacity: 0;
-    clip-path: circle(0% at 40% 75%);
-  }
-  25% {
-    opacity: 0.18;
-    clip-path: circle(18% at 40% 75%);
-  }
-  72% {
-    opacity: 0.2;
-    clip-path: circle(78% at 48% 48%);
-  }
-  100% {
-    opacity: 0;
-    clip-path: circle(92% at 50% 50%);
-  }
-}
-
-@keyframes splashSpark {
-  0% {
-    opacity: 0;
-    transform: scale(0) rotate(-25deg);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.35) rotate(8deg);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1) rotate(0);
-  }
-}
-
-@keyframes splashBrandReveal {
-  to {
-    opacity: 0;
-    transform: translateY(0);
-  }
-}
-
-@keyframes splashLogoHold {
+@keyframes splashLogoEnter {
   to {
     opacity: 1;
-  }
-}
-
-@keyframes splashLogoSettle {
-  0% {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes splashExit {
   to {
     opacity: 0;
-    transform: scale(1.025);
     visibility: hidden;
   }
 }
 
 @media (max-width: 600px) {
   .splash-content {
-    width: min(78vw, 310px);
+    width: min(76vw, 300px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .splash-container,
-  .splash-logo,
-  .splash-seed,
-  .splash-symbol-mask,
-  .splash-brand-mask,
-  .splash-spark {
+  .splash-logo {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
   }

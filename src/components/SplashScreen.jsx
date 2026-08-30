@@ -31,10 +31,6 @@ export default function SplashScreen({ onFinish, minDuration = 3800 }) {
       <div className="splash-content">
         <div className="logo-wrapper">
           <img src="/ingrevia-brand-transparent.png" alt="Ingrevia 食知途" className="splash-logo" />
-          <span className="splash-seed" aria-hidden="true" />
-          <span className="splash-symbol-mask" aria-hidden="true" />
-          <span className="splash-spark" aria-hidden="true">✦</span>
-          <span className="splash-brand-mask" aria-hidden="true" />
         </div>
       </div>
     </div>
