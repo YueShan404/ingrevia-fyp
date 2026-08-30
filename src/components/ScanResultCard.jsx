@@ -173,6 +173,20 @@ export default function ScanResultCard({ result, recipes = [] }) {
             {result?.confidence < 40 && result?.confidence > 0 && (
               <p className="text-xs text-amber-600 mt-2">{t("scanner.low_confidence")}</p>
             )}
+            {result?.suggestions?.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {result.suggestions.map((suggestion) => (
+                  <Link
+                    key={suggestion.id}
+                    to={`/ingredient/${suggestion.id}`}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-secondary/70"
+                  >
+                    {localized(suggestion, "name", lang)}
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

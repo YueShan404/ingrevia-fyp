@@ -7,6 +7,84 @@ import { ScanLine, Upload, Camera, Search, ArrowRight, Image as ImageIcon } from
 import ScanResultCard from "@/components/ScanResultCard";
 import IngreviaLoader from "@/components/IngreviaLoader";
 
+const normalizeText = (value = "") =>
+  value
+    .toString()
+    .toLowerCase()
+    .replace(/[_-]/g, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const getIngredientTerms = (ingredient) =>
+  [
+    ingredient.name,
+    ingredient.name_bm,
+    ingredient.name_zh,
+    ingredient.name_ta,
+    ingredient.category,
+    ingredient.description,
+  ]
+    .filter(Boolean)
+    .map(normalizeText);
+
+const scoreIngredient = (ingredient, query) => {
+  if (!query) return 0;
+  const terms = getIngredientTerms(ingredient);
+  return terms.reduce((score, term) => {
+    if (!term) return score;
+    if (term === query) return Math.max(score, 96);
+    if (term.includes(query) || query.includes(term)) return Math.max(score, 82);
+
+    const queryWords = query.split(" ").filter((word) => word.length > 2);
+    const termWords = term.split(" ").filter((word) => word.length > 2);
+    const overlap = queryWords.filter((word) => termWords.includes(word)).length;
+    if (overlap > 0) {
+      return Math.max(score, Math.min(76, 46 + overlap * 12));
+    }
+    return score;
+  }, 0);
+};
+
+const fallbackRecognize = ({ file, ingredients, imageUrl, cause }) => {
+  const nameQuery = normalizeText(file?.name?.replace(/\.[^.]+$/, "") || "");
+  const candidates = (ingredients || [])
+    .map((ingredient) => ({
+      ingredient,
+      score: scoreIngredient(ingredient, nameQuery),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+
+  const best = candidates[0];
+  if (best?.score >= 65) {
+    return {
+      ingredient_name: best.ingredient.name,
+      confidence: best.score,
+      description: "AI recognition is unavailable, so Ingrevia matched this image using your ingredient catalogue.",
+      matchedIngredient: best.ingredient,
+      matched: true,
+      image_url: imageUrl,
+      fallback: true,
+      suggestions: candidates.map((item) => item.ingredient),
+    };
+  }
+
+  return {
+    ingredient_name: "",
+    confidence: 0,
+    description:
+      cause ||
+      "AI recognition is unavailable right now. Search the ingredient name below or upload an image with a clearer file name.",
+    matchedIngredient: null,
+    matched: false,
+    image_url: imageUrl,
+    fallback: true,
+    suggestions: candidates.map((item) => item.ingredient),
+  };
+};
+
 export default function Scanner() {
   const { t, lang } = useI18n();
   const navigate = useNavigate();
@@ -36,42 +114,81 @@ export default function Scanner() {
     setAnalyzing(true);
     setResult(null);
     setAnalysisPhase("uploading");
-    const reader = new FileReader();
-    reader.onload = (e) => setImagePreview(e.target.result);
-    reader.readAsDataURL(file);
+    let previewUrl = "";
+    try {
+      previewUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      setImagePreview(previewUrl);
+    } catch {
+      setResult({ error: true, description: "Unable to read this image. Please choose another image file." });
+      setAnalyzing(false);
+      setAnalysisPhase("");
+      return;
+    }
 
     try {
-      // Upload the image (allowed from client)
-      const { file_url } = await appApi.integrations.Core.UploadFile({ file });
+      let file_url = previewUrl;
+      try {
+        const uploaded = await appApi.integrations.Core.UploadFile({ file });
+        file_url = uploaded.file_url;
+      } catch (uploadError) {
+        console.warn("Scanner upload failed; continuing with local fallback.", uploadError);
+      }
+
       setAnalysisPhase("analyzing");
-      // Call the backend function for AI recognition (InvokeLLM must run server-side)
-      const response = await appApi.functions.invoke("recognizeIngredient", { image_url: file_url });
-      const llmResult = response.data;
+      let llmResult = null;
+      let recognitionError = null;
+      if (file_url && !file_url.startsWith("data:")) {
+        try {
+          const response = await appApi.functions.invoke("recognizeIngredient", { image_url: file_url });
+          llmResult = response.data;
+        } catch (err) {
+          recognitionError = err;
+          console.warn("Scanner AI recognition failed; using catalogue fallback.", err);
+        }
+      }
+
+      if (!llmResult || typeof llmResult !== "object") {
+        llmResult = fallbackRecognize({
+          file,
+          ingredients,
+          imageUrl: file_url,
+          cause: recognitionError?.message,
+        });
+      }
 
       const matchedIngredient = llmResult.matched_ingredient;
       const confidence = llmResult.confidence || 0;
-      const matched = !!matchedIngredient && confidence >= 40;
+      const fallbackMatchedIngredient = llmResult.matchedIngredient;
+      const matched = !!(matchedIngredient || fallbackMatchedIngredient) && confidence >= 40;
 
       const scanResult = {
         ingredient_name: llmResult.ingredient_name || "",
         confidence,
         description: llmResult.description || "",
-        matchedIngredient,
+        matchedIngredient: matchedIngredient || fallbackMatchedIngredient,
         matched,
         image_url: file_url,
+        fallback: Boolean(llmResult.fallback),
+        suggestions: llmResult.suggestions || [],
       };
       setResult(scanResult);
 
       // Save to scan history
-      if (matchedIngredient) {
+      const canSaveHistory = file_url && !file_url.startsWith("data:");
+      if (scanResult.matchedIngredient && canSaveHistory) {
         appApi.entities.ScanHistory.create({
-          ingredient_name: matchedIngredient.name,
-          ingredient_id: matchedIngredient.id,
+          ingredient_name: scanResult.matchedIngredient.name,
+          ingredient_id: scanResult.matchedIngredient.id,
           image_url: file_url,
           confidence,
           matched: true,
         }).catch(() => {});
-      } else if (llmResult.ingredient_name) {
+      } else if (llmResult.ingredient_name && canSaveHistory) {
         appApi.entities.ScanHistory.create({
           ingredient_name: llmResult.ingredient_name,
           image_url: file_url,
@@ -80,7 +197,10 @@ export default function Scanner() {
         }).catch(() => {});
       }
     } catch (err) {
-      setResult({ error: true, description: "Recognition failed. Please try again." });
+      setResult({
+        error: true,
+        description: err?.message || "Recognition failed. Please try again or use manual search below.",
+      });
     }
     setAnalyzing(false);
     setAnalysisPhase("");
@@ -125,9 +245,9 @@ export default function Scanner() {
               </button>
             </div>
             <input ref={fileRef} type="file" accept="image/*" className="hidden"
-              onChange={(e) => handleFile(e.target.files?.[0])} />
+              onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ""; }} />
             <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden"
-              onChange={(e) => handleFile(e.target.files?.[0])} />
+              onChange={(e) => { handleFile(e.target.files?.[0]); e.target.value = ""; }} />
           </div>
         )}
 
