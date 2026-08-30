@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { appApi, supabase } from '@/api/supabaseClient';
 import { isAuthPath } from '@/lib/authReturnTo';
 
@@ -13,23 +13,7 @@ export const AuthProvider = ({ children }) => {
   const [authChecked, setAuthChecked] = useState(false);
   const [appPublicSettings, setAppPublicSettings] = useState(null);
 
-  useEffect(() => {
-    checkAppState();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-      checkUserAuth();
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const checkAppState = async () => {
-    setIsLoadingPublicSettings(false);
-    setAppPublicSettings({ public_settings: {} });
-    await checkUserAuth();
-  };
-
-  const checkUserAuth = async () => {
+  const checkUserAuth = useCallback(async () => {
     try {
       setIsLoadingAuth(true);
       const currentUser = await appApi.auth.me();
@@ -41,15 +25,46 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('User auth check failed:', error);
       setIsLoadingAuth(false);
-      setIsAuthenticated(false);
+      const limitedUser = error?.authUser
+        ? {
+            id: error.authUser.id,
+            email: error.authUser.email,
+            full_name: error.profile?.full_name || error.authUser.user_metadata?.full_name || error.authUser.user_metadata?.name || error.authUser.email,
+            role: error.profile?.role || error.authUser.user_metadata?.role || 'user',
+            status: error.profile?.status,
+          }
+        : null;
+      setUser(limitedUser);
+      setIsAuthenticated(Boolean(limitedUser));
       setAuthChecked(true);
       
       setAuthError({
         type: error?.type || 'auth_required',
         message: error?.message || 'Authentication required'
       });
+      throw error;
     }
-  };
+  }, []);
+
+  const checkAppState = useCallback(async () => {
+    setIsLoadingPublicSettings(false);
+    setAppPublicSettings({ public_settings: {} });
+    try {
+      await checkUserAuth();
+    } catch {
+      // Auth errors are stored in state for route-level handling.
+    }
+  }, [checkUserAuth]);
+
+  useEffect(() => {
+    checkAppState();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      checkUserAuth().catch(() => {});
+    });
+
+    return () => subscription.unsubscribe();
+  }, [checkAppState, checkUserAuth]);
 
   const logout = (shouldRedirect = true) => {
     setUser(null);

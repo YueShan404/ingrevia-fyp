@@ -8,9 +8,11 @@ import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { checkUserAuth } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,8 +28,13 @@ export default function Login() {
     setLoading(true);
     try {
       await appApi.auth.loginViaEmailPassword(email, password);
-      window.location.href = returnTo;
-    } catch {
+      await checkUserAuth();
+      navigate(returnTo, { replace: true });
+    } catch (err) {
+      if (err?.type === "account_pending" || err?.type === "account_blocked") {
+        setError(err.message);
+        return;
+      }
       const registerUrl = `/register?email=${encodeURIComponent(email)}${returnTo !== "/" ? `&returnTo=${encodeURIComponent(returnTo)}` : ""}`;
       navigate(registerUrl, {
         replace: true,

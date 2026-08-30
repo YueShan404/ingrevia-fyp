@@ -77,9 +77,10 @@ const getRedirectUrl = (returnTo = "/") => {
   return new URL(returnTo, baseUrl).toString();
 };
 
-const createAuthError = (type, message) => {
+const createAuthError = (type, message, details = {}) => {
   const error = new Error(message);
   error.type = type;
+  Object.assign(error, details);
   return error;
 };
 
@@ -112,12 +113,12 @@ export const appApi = {
       }
 
       if (profile.status !== "active") {
-        await supabase.auth.signOut();
         throw createAuthError(
           profile.status === "blocked" ? "account_blocked" : "account_pending",
           profile.status === "blocked"
             ? "This account is blocked. Please contact the administrator."
-            : "Your account is pending approval."
+            : "Your account is pending approval.",
+          { authUser: user, profile }
         );
       }
 
