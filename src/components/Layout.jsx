@@ -52,14 +52,14 @@ export default function Layout({ children }) {
   const isActive = (path) => (path === "/" ? location.pathname === "/" : location.pathname.startsWith(path));
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="relative min-h-screen w-full max-w-full overflow-x-hidden flex flex-col bg-background">
       <div className="leaf-blob w-72 h-72 bg-[hsl(19,53%,55%)] -top-24 -right-24" />
       <div className="leaf-blob w-80 h-80 bg-[hsl(126,24%,44%)] top-[28rem] -left-44" style={{ animationDelay: "3s" }} />
 
-      <header className="sticky top-0 z-50 bg-white/92 backdrop-blur-xl border-b border-border/60 shadow-sm">
-        <div className="w-full max-w-[1680px] mx-auto px-5 sm:px-8 lg:px-10">
-          <div className="flex items-center justify-between min-h-20 gap-4">
-            <Link to="/" className="flex items-center shrink-0 group">
+      <header className="sticky top-0 z-50 w-full max-w-full bg-white/92 backdrop-blur-xl border-b border-border/60 shadow-sm">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center justify-between min-h-20 gap-4">
+            <Link to="/" className="flex min-w-0 items-center shrink-0 group">
               <Logo size={36} showTagline lang={lang} />
             </Link>
 
@@ -106,7 +106,7 @@ export default function Layout({ children }) {
               </div>
             </nav>
 
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <Link
                 to="/scan"
                 className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg transition-all"
@@ -207,9 +207,9 @@ export default function Layout({ children }) {
         </nav>
       </aside>
 
-      <main className="flex-1 relative z-10">{children}</main>
+      <main className="flex-1 relative z-10 w-full max-w-full overflow-x-hidden">{children}</main>
 
-      <footer className="relative z-10 forest-gradient text-white mt-12">
+      <footer className="relative z-10 w-full max-w-full overflow-x-hidden forest-gradient text-white mt-12">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid md:grid-cols-3 gap-8">
             <div>

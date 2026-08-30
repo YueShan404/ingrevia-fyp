@@ -92,8 +92,16 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body,
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
   body {
     @apply bg-background text-foreground font-body antialiased;
+    min-width: 0;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
@@ -165,6 +173,8 @@
   border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
   filter: blur(76px);
   opacity: 0.16;
+  max-width: 100vw;
+  contain: paint;
   pointer-events: none;
   animation: blob-float 14s ease-in-out infinite;
 }

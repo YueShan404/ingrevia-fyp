@@ -23,19 +23,19 @@ const TAGLINES = {
 
 export default function Logo({ size = 36, showWordmark = true, showTagline = false, lang = "en", className = "" }) {
   return (
-    <span className={`inline-flex items-center gap-2.5 leading-none ${className}`}>
+    <span className={`inline-flex min-w-0 max-w-full items-center gap-2.5 leading-none ${className}`}>
       <LogoIcon size={size} />
       {showWordmark && (
-        <span>
+        <span className="min-w-0 overflow-hidden">
           <span
-            className="font-display font-extrabold"
+            className="block truncate font-display font-extrabold"
             style={{ color: "#2d1165", fontSize: Math.round(size * 0.68), letterSpacing: 0 }}
           >
             Ingrevia
           </span>
           {showTagline && (
             <span
-              className="block font-semibold tracking-[0.28em] mt-1"
+              className="block truncate font-semibold tracking-[0.28em] mt-1"
               style={{ color: "#2d1165", opacity: 0.72, fontSize: Math.max(8, Math.round(size * 0.18)) }}
             >
               {TAGLINES[lang] || TAGLINES.en}
