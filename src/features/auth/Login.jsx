@@ -41,9 +41,7 @@ export default function Login() {
   };
 
   const handleGoogle = () => {
-    navigate(`/register${returnTo !== "/" ? `?returnTo=${encodeURIComponent(returnTo)}` : ""}`, {
-      state: { authNotice: "Please register first. You can use Google on the register page." },
-    });
+    appApi.auth.loginWithProvider("google", returnTo);
   };
 
   return (
@@ -69,7 +67,7 @@ export default function Login() {
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
-        Register first to use Google
+        Continue with Google
       </Button>
 
       <div className="relative mb-6">
