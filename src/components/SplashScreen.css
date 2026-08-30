@@ -6,7 +6,10 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #ffffff;
+  background:
+    radial-gradient(circle at 18% 80%, rgba(99, 54, 180, 0.08), transparent 26%),
+    radial-gradient(circle at 84% 18%, rgba(255, 134, 31, 0.09), transparent 25%),
+    #fffcfa;
 }
 
 .splash-container.fade-out {
@@ -14,15 +17,23 @@
 }
 
 .splash-content {
-  width: min(68vw, 340px);
+  position: relative;
+  width: min(78vw, 360px);
+  min-height: 420px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
+  text-align: center;
 }
 
 .logo-wrapper {
-  width: 100%;
+  width: min(72vw, 330px);
   aspect-ratio: 784 / 910;
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  animation: splashBrandEnter 0.42s ease 1.78s forwards;
 }
 
 .splash-logo {
@@ -30,12 +41,150 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  opacity: 0;
-  transform: translateY(8px) scale(0.98);
-  animation: splashLogoEnter 0.8s ease forwards;
 }
 
-@keyframes splashLogoEnter {
+.splash-logo-stage {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 168px;
+  height: 168px;
+  transform: translate(-50%, -112px);
+  animation: splashStageExit 0.36s ease 1.72s forwards;
+}
+
+.splash-seed {
+  position: absolute;
+  left: 48%;
+  top: 58%;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #6336b4;
+  box-shadow: 0 0 18px rgba(99, 54, 180, 0.24);
+  opacity: 0;
+  transform: scale(0.75);
+  animation: splashSeed 0.42s ease forwards;
+}
+
+.splash-journey {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.splash-arc,
+.splash-path {
+  fill: none;
+  stroke: url("#splashJourneyGradient");
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 210;
+  stroke-dashoffset: 210;
+  opacity: 0;
+}
+
+.splash-arc {
+  animation: splashDraw 0.78s cubic-bezier(0.45, 0, 0.16, 1) 0.36s forwards;
+}
+
+.splash-path {
+  animation: splashDraw 0.78s cubic-bezier(0.45, 0, 0.16, 1) 0.54s forwards;
+}
+
+.splash-leaf,
+.splash-dot {
+  fill: #6336b4;
+  opacity: 0;
+  transform-origin: 56px 105px;
+  animation: splashPartIn 0.36s ease 0.58s forwards;
+}
+
+.splash-leaf-right {
+  animation-delay: 0.68s;
+}
+
+.splash-star {
+  fill: #ff861f;
+  opacity: 0;
+  transform-origin: 124px 50px;
+  animation: splashStarPulse 0.58s ease 1.34s forwards;
+}
+
+.splash-tagline {
+  min-height: 24px;
+  margin: 0;
+  color: rgba(41, 16, 95, 0.72);
+  font-size: 15px;
+  font-weight: 700;
+  opacity: 0;
+  transform: translateY(4px);
+  animation: splashBrandEnter 0.42s ease 2s forwards;
+}
+
+.splash-tagline span {
+  color: #6336b4;
+}
+
+.splash-tagline strong {
+  color: #c44d1f;
+}
+
+@keyframes splashSeed {
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50px, 58px) scale(0.8);
+  }
+}
+
+@keyframes splashDraw {
+  0% {
+    opacity: 0;
+    stroke-dashoffset: 210;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes splashPartIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes splashStarPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotate(-8deg);
+  }
+  58% {
+    opacity: 1;
+    transform: scale(1.22) rotate(6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes splashStageExit {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -112px) scale(0.98);
+  }
+}
+
+@keyframes splashBrandEnter {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -51,19 +200,49 @@
 
 @media (max-width: 600px) {
   .splash-content {
-    width: min(76vw, 300px);
+    width: min(86vw, 320px);
+    min-height: 390px;
+  }
+
+  .logo-wrapper {
+    width: min(82vw, 300px);
+  }
+
+  .splash-logo-stage {
+    width: 148px;
+    height: 148px;
+    transform: translate(-50%, -112px);
+  }
+
+  .splash-tagline {
+    font-size: 13px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .splash-container,
-  .splash-logo {
+  .splash-logo,
+  .splash-logo-stage,
+  .splash-seed,
+  .splash-arc,
+  .splash-path,
+  .splash-leaf,
+  .splash-dot,
+  .splash-star,
+  .splash-tagline,
+  .logo-wrapper {
     animation-duration: 0.01ms !important;
     animation-delay: 0ms !important;
   }
 
-  .splash-logo {
+  .splash-logo,
+  .logo-wrapper,
+  .splash-tagline {
     opacity: 1;
     transform: none;
+  }
+
+  .splash-logo-stage {
+    display: none;
   }
 }

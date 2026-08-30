@@ -1,17 +1,20 @@
 .ingrevia-loader {
   width: 100%;
-  min-height: 260px;
+  min-height: 220px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 36px 20px;
-  color: #241052;
+  padding: 32px 20px;
+  color: #29105f;
 }
 
 .ingrevia-loader-full {
   min-height: 100vh;
-  background: radial-gradient(circle at center, #ffffff 0%, #ffffff 58%, #fbf8f4 100%);
+  background:
+    radial-gradient(circle at 18% 80%, rgba(99, 54, 180, 0.06), transparent 25%),
+    radial-gradient(circle at 84% 18%, rgba(255, 134, 31, 0.07), transparent 25%),
+    #fffcfa;
 }
 
 .ingrevia-loader-compact {
@@ -21,34 +24,28 @@
 
 .ingrevia-loader-symbol {
   position: relative;
-  width: 128px;
-  height: 128px;
+  width: 92px;
+  height: 92px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 .ingrevia-loader-compact .ingrevia-loader-symbol {
-  width: 92px;
-  height: 92px;
-}
-
-.ingrevia-loader-glow {
-  position: absolute;
-  inset: 18%;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(255, 138, 38, 0.2), rgba(216, 68, 135, 0.14), rgba(113, 56, 168, 0.08), transparent 72%);
-  filter: blur(18px);
-  animation: ingreviaLoaderGlow 1.7s ease-in-out infinite;
+  width: 68px;
+  height: 68px;
 }
 
 .ingrevia-loader-mark {
   position: relative;
   z-index: 2;
-  width: 74%;
-  height: 74%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  filter: drop-shadow(0 12px 24px rgba(36, 16, 82, 0.1));
+  opacity: 0.86;
+  filter: saturate(0.92) drop-shadow(0 8px 18px rgba(41, 16, 95, 0.08));
 }
 
 .ingrevia-loader-path {
@@ -63,28 +60,32 @@
 .ingrevia-loader-progress {
   fill: none;
   stroke: url("#ingreviaLoaderGradient");
-  stroke-width: 7;
+  stroke-width: 6;
   stroke-linecap: round;
-  stroke-dasharray: 150;
-  stroke-dashoffset: 150;
+  stroke-dasharray: 128;
+  stroke-dashoffset: 128;
   opacity: 0;
-  animation: ingreviaLoaderTravel 1.7s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  animation: ingreviaLoaderTravel 1.55s cubic-bezier(0.45, 0, 0.25, 1) infinite;
 }
 
-.ingrevia-loader-spark {
+.ingrevia-loader-light {
   position: absolute;
-  top: 16%;
-  right: 19%;
+  left: 77%;
+  top: 19%;
   z-index: 4;
-  color: #ff8626;
-  font-size: 24px;
-  line-height: 1;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ff861f;
+  box-shadow: 0 0 0 4px rgba(255, 134, 31, 0.13);
   opacity: 0;
-  animation: ingreviaLoaderSpark 1.7s ease-in-out infinite;
+  transform: scale(0.8);
+  animation: ingreviaLoaderLight 1.55s ease-in-out infinite;
 }
 
 .ingrevia-loader-text {
-  margin-top: 6px;
+  min-height: 24px;
+  margin-top: 10px;
   text-align: center;
 }
 
@@ -93,31 +94,7 @@
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0;
-}
-
-.ingrevia-loader-dots {
-  height: 18px;
-  margin-top: 7px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-
-.ingrevia-loader-dots span {
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  background: #d84487;
-  animation: ingreviaLoaderDot 1.2s ease-in-out infinite;
-}
-
-.ingrevia-loader-dots span:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.ingrevia-loader-dots span:nth-child(3) {
-  animation-delay: 0.3s;
+  color: #29105f;
 }
 
 .sr-only {
@@ -134,7 +111,7 @@
 
 @keyframes ingreviaLoaderTravel {
   0% {
-    stroke-dashoffset: 150;
+    stroke-dashoffset: 128;
     opacity: 0;
   }
   12% {
@@ -150,61 +127,30 @@
   }
 }
 
-@keyframes ingreviaLoaderSpark {
+@keyframes ingreviaLoaderLight {
   0%,
-  58% {
+  62% {
     opacity: 0;
-    transform: scale(0) rotate(-20deg);
+    transform: scale(0.75);
   }
-  72% {
+  76% {
     opacity: 1;
-    transform: scale(1.35) rotate(8deg);
-  }
-  86% {
-    opacity: 1;
-    transform: scale(1) rotate(0);
+    transform: scale(1.25);
   }
   100% {
     opacity: 0;
-    transform: scale(0.8);
-  }
-}
-
-@keyframes ingreviaLoaderGlow {
-  0%,
-  100% {
-    opacity: 0.45;
-    transform: scale(0.92);
-  }
-  50% {
-    opacity: 0.9;
-    transform: scale(1.12);
-  }
-}
-
-@keyframes ingreviaLoaderDot {
-  0%,
-  60%,
-  100% {
-    opacity: 0.35;
-    transform: translateY(0);
-  }
-  30% {
-    opacity: 1;
-    transform: translateY(-5px);
+    transform: scale(0.9);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ingrevia-loader-glow,
   .ingrevia-loader-progress,
-  .ingrevia-loader-spark,
-  .ingrevia-loader-dots span {
+  .ingrevia-loader-light {
     animation: none;
   }
 
   .ingrevia-loader-progress,
-  .ingrevia-loader-spark {
+  .ingrevia-loader-light {
     opacity: 1;
   }
 
