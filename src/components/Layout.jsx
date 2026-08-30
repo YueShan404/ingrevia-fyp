@@ -53,23 +53,23 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <div className="leaf-blob w-72 h-72 bg-[hsl(19,53%,55%)] -top-20 -right-20" />
-      <div className="leaf-blob w-96 h-96 bg-[hsl(126,24%,44%)] top-1/3 -left-40" style={{ animationDelay: "3s" }} />
+      <div className="leaf-blob w-72 h-72 bg-[hsl(19,53%,55%)] -top-24 -right-24" />
+      <div className="leaf-blob w-80 h-80 bg-[hsl(126,24%,44%)] top-[28rem] -left-44" style={{ animationDelay: "3s" }} />
 
-      <header className="sticky top-0 z-50 glass-card border-b border-border/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16 gap-2">
+      <header className="sticky top-0 z-50 bg-white/92 backdrop-blur-xl border-b border-border/60 shadow-sm">
+        <div className="w-full max-w-[1680px] mx-auto px-5 sm:px-8 lg:px-10">
+          <div className="flex items-center justify-between min-h-20 gap-4">
             <Link to="/" className="flex items-center shrink-0 group">
-              <Logo size={34} showTagline lang={lang} />
+              <Logo size={36} showTagline lang={lang} />
             </Link>
 
             {/* Desktop nav */}
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1.5">
               {primaryLinks.map((link) => {
                 const Icon = link.icon;
                 return (
                   <Link key={link.to} to={link.to}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium transition-all ${
+                    className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${
                       isActive(link.to)
                         ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
                         : "text-foreground/70 hover:bg-secondary hover:text-foreground"
@@ -82,7 +82,7 @@ export default function Layout({ children }) {
               {/* More dropdown */}
               <div className="relative" ref={moreRef}>
                 <button onClick={() => setMoreOpen(!moreOpen)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${
                     secondaryLinks.some((l) => isActive(l.to)) ? "bg-accent text-accent-foreground" : "text-foreground/70 hover:bg-secondary"
                   }`}>
                   {t("nav.more")} <ChevronDown className={`w-3.5 h-3.5 transition-transform ${moreOpen ? "rotate-180" : ""}`} />
@@ -106,7 +106,7 @@ export default function Layout({ children }) {
               </div>
             </nav>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <Link
                 to="/scan"
                 className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg transition-all"

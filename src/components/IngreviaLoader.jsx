@@ -5,7 +5,7 @@ export default function IngreviaLoader({ message = "Loading your journey...", fu
     <div className={`ingrevia-loader ${fullScreen ? "ingrevia-loader-full" : ""} ${compact ? "ingrevia-loader-compact" : ""}`} role="status">
       <div className="ingrevia-loader-symbol" aria-hidden="true">
         <div className="ingrevia-loader-glow" />
-        <img src="/ingrevia-mark.png" alt="" className="ingrevia-loader-mark" />
+        <img src="/ingrevia-mark-transparent.png" alt="" className="ingrevia-loader-mark" />
         <svg className="ingrevia-loader-path" viewBox="0 0 120 120">
           <defs>
             <linearGradient id="ingreviaLoaderGradient" x1="0%" y1="100%" x2="100%" y2="0%">

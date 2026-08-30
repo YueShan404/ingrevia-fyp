@@ -29,13 +29,13 @@ export default function Home() {
   return (
     <Layout>
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 sm:px-6 pt-12 pb-16">
-        <div className="max-w-5xl mx-auto text-center relative z-10">
+      <section className="relative overflow-hidden px-5 sm:px-8 lg:px-10 pt-12 pb-14">
+        <div className="max-w-6xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/12 border border-primary/20 mb-6 animate-float-up">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary">Ingrevia 食知途</span>
           </div>
-          <h1 className="font-heading font-extrabold text-4xl sm:text-6xl leading-tight mb-4 animate-float-up" style={{ animationDelay: "0.1s" }}>
+          <h1 className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-6xl leading-[1.04] mb-5 animate-float-up" style={{ animationDelay: "0.1s" }}>
             <span className="text-gradient">{t("home.hero_title")}</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8 animate-float-up" style={{ animationDelay: "0.2s" }}>
@@ -51,13 +51,13 @@ export default function Home() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mt-12 animate-float-up" style={{ animationDelay: "0.4s" }}>
+          <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto mt-10 animate-float-up" style={{ animationDelay: "0.4s" }}>
             {[
               { val: "30", label: t("home.stat_ingredients") },
               { val: "60+", label: t("home.stat_recipes") },
               { val: "4", label: t("home.stat_languages") },
             ].map((s, i) => (
-              <div key={i} className="glass-card rounded-2xl p-4 border border-border/60">
+              <div key={i} className="glass-card rounded-2xl p-4 border border-border/60 min-h-24 flex flex-col items-center justify-center">
                 <p className="font-heading font-extrabold text-2xl text-primary">{s.val}</p>
                 <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
               </div>

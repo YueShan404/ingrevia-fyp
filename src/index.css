@@ -24,10 +24,9 @@
     --border: 26 22% 87%;
     --input: 26 22% 87%;
     --ring: 18 71% 42%;
-    /* Brand (logo) keep green for identity */
-    --brand-deep: 175 100% 11%;
-    --brand-mid: 85 54% 51%;
-    --brand-lime: 75 60% 60%;
+    --brand-deep: 260 70% 16%;
+    --brand-mid: 318 66% 55%;
+    --brand-lime: 30 100% 57%;
     /* Semantic helpers */
     --terra: 18 71% 42%;
     --clay: 19 53% 55%;
@@ -76,9 +75,9 @@
     --border: 18 22% 22%;
     --input: 18 22% 22%;
     --ring: 18 71% 52%;
-    --brand-deep: 175 60% 20%;
-    --brand-mid: 85 54% 51%;
-    --brand-lime: 75 60% 60%;
+    --brand-deep: 260 55% 20%;
+    --brand-mid: 318 66% 55%;
+    --brand-lime: 30 100% 57%;
     --terra: 18 71% 52%;
     --clay: 19 53% 60%;
     --leaf: 126 30% 55%;
@@ -164,8 +163,8 @@
 .leaf-blob {
   position: absolute;
   border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%;
-  filter: blur(60px);
-  opacity: 0.28;
+  filter: blur(76px);
+  opacity: 0.16;
   pointer-events: none;
   animation: blob-float 14s ease-in-out infinite;
 }
