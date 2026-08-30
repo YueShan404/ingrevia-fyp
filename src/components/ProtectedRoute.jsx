@@ -29,7 +29,17 @@ export default function ProtectedRoute({ children, fallback = <DefaultFallback /
       return <UserNotRegisteredError />;
     }
     if (authError.type === 'profile_required') {
-      return <Navigate to={`/register?returnTo=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+      return (
+        <div className="min-h-screen flex items-center justify-center px-4 bg-background">
+          <div className="max-w-md text-center rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <h1 className="font-heading text-2xl font-bold mb-2">Account setup needed</h1>
+            <p className="text-sm text-muted-foreground mb-5">{authError.message}</p>
+            <Link to="/" className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground">
+              Back to Home
+            </Link>
+          </div>
+        </div>
+      );
     }
     if (authError.type === 'account_pending' || authError.type === 'account_blocked') {
       return (

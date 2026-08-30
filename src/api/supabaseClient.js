@@ -108,8 +108,11 @@ export const appApi = {
 
       if (profileError) throw profileError;
       if (!profile) {
-        await supabase.auth.signOut();
-        throw createAuthError("profile_required", "Please register before logging in.");
+        throw createAuthError(
+          "profile_required",
+          "Your login worked, but your profile setup is missing. Please ask the administrator to repair your profile record.",
+          { authUser: user }
+        );
       }
 
       if (profile.status !== "active") {

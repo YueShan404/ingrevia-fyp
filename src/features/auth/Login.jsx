@@ -31,7 +31,7 @@ export default function Login() {
       await checkUserAuth();
       navigate(returnTo, { replace: true });
     } catch (err) {
-      if (err?.type === "account_pending" || err?.type === "account_blocked") {
+      if (err?.type === "account_pending" || err?.type === "account_blocked" || err?.type === "profile_required") {
         setError(err.message);
         return;
       }
