@@ -37,6 +37,13 @@ export default function RecipeDetail() {
   const applied = isApplied(recipe.id);
   const ratio = servings / (recipe.servings || 2);
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
+  const recipeSpeech = [
+    title,
+    desc,
+    `${t("common.ingredients")}: ${ingredients.join(". ")}`,
+    `${t("common.steps")}: ${steps.join(". ")}`,
+    zeroWaste ? `${t("recipe_detail.zero_waste_title")}: ${zeroWaste}` : "",
+  ].filter(Boolean).join(". ");
 
   // Try to parse numeric quantities from ingredients for scaling
   const scaleIngredient = (line) => {
@@ -83,10 +90,13 @@ export default function RecipeDetail() {
           <div className="p-5">
             <div className="flex items-start justify-between gap-3">
               <p className="text-muted-foreground leading-relaxed flex-1">{desc}</p>
-              <button onClick={() => toggleFavorite(recipe.id)}
-                className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-110 ${fav ? "bg-red-50 dark:bg-red-950/30" : "bg-secondary"}`}>
-                <Heart className={`w-5 h-5 ${fav ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <SpeakButton text={recipeSpeech} />
+                <button onClick={() => toggleFavorite(recipe.id)}
+                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all hover:scale-110 ${fav ? "bg-red-50 dark:bg-red-950/30" : "bg-secondary"}`}>
+                  <Heart className={`w-5 h-5 ${fav ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+                </button>
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {totalTime} {t("common.minutes")}</span>
@@ -125,7 +135,7 @@ export default function RecipeDetail() {
         <div className="glass-card rounded-3xl border border-border/50 p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading font-bold text-lg">{t("common.ingredients")}</h2>
-            <SpeakButton text={ingredients.join(". ")} />
+            <SpeakButton text={`${t("common.ingredients")}: ${ingredients.join(". ")}`} />
           </div>
           <ul className="space-y-2.5">
             {ingredients.map((ing, i) => (
@@ -141,7 +151,7 @@ export default function RecipeDetail() {
         <div className="glass-card rounded-3xl border border-border/50 p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading font-bold text-lg">{t("common.steps")}</h2>
-            <SpeakButton text={steps.join(". ")} />
+            <SpeakButton text={`${t("common.steps")}: ${steps.join(". ")}`} />
           </div>
           <ol className="space-y-4">
             {steps.map((step, i) => (

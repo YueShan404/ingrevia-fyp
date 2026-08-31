@@ -36,27 +36,67 @@ export function AccessibilityProvider({ children }) {
 
   const speak = useCallback((text, lang) => {
     const cleanText = String(text || "").replace(/\s+/g, " ").trim();
-    if (!cleanText) return false;
-    if (!("speechSynthesis" in window)) return false;
+    if (!cleanText) return Promise.resolve(false);
+    if (!("speechSynthesis" in window)) return Promise.resolve(false);
 
     window.speechSynthesis.cancel();
-    const langMap = { en: "en-US", bm: "ms-MY", zh: "zh-CN", ta: "ta-IN" };
-    const speechLang = langMap[lang] || "en-US";
-    const availableVoices = voices.length ? voices : window.speechSynthesis.getVoices();
-    const matchingVoice =
-      availableVoices.find((voice) => voice.lang === speechLang) ||
-      availableVoices.find((voice) => voice.lang?.toLowerCase().startsWith(speechLang.slice(0, 2).toLowerCase()));
 
-    const utter = new SpeechSynthesisUtterance(cleanText);
-    utter.lang = matchingVoice?.lang || speechLang;
-    if (matchingVoice) utter.voice = matchingVoice;
-    utter.rate = 0.95;
-    utter.pitch = 1;
-    utter.onstart = () => { speakingRef.current = true; };
-    utter.onend = () => { speakingRef.current = false; };
-    utter.onerror = () => { speakingRef.current = false; };
-    window.speechSynthesis.speak(utter);
-    return true;
+    const waitForVoices = () =>
+      new Promise((resolve) => {
+        const existing = window.speechSynthesis.getVoices();
+        if (existing.length) {
+          resolve(existing);
+          return;
+        }
+
+        let settled = false;
+        const finish = () => {
+          if (settled) return;
+          settled = true;
+          window.speechSynthesis.removeEventListener?.("voiceschanged", finish);
+          resolve(window.speechSynthesis.getVoices());
+        };
+
+        window.speechSynthesis.addEventListener?.("voiceschanged", finish, { once: true });
+        setTimeout(finish, 900);
+      });
+
+    return waitForVoices().then((loadedVoices) => {
+      const langMap = { en: "en-US", bm: "ms-MY", zh: "zh-CN", ta: "ta-IN" };
+      const speechLang = langMap[lang] || "en-US";
+      const availableVoices = loadedVoices.length ? loadedVoices : voices;
+      const matchingVoice =
+        availableVoices.find((voice) => voice.lang === speechLang) ||
+        availableVoices.find((voice) => voice.lang?.toLowerCase().startsWith(speechLang.slice(0, 2).toLowerCase())) ||
+        availableVoices.find((voice) => voice.default);
+
+      const utter = new SpeechSynthesisUtterance(cleanText);
+      utter.lang = matchingVoice?.lang || speechLang;
+      if (matchingVoice) utter.voice = matchingVoice;
+      utter.rate = 0.92;
+      utter.pitch = 1;
+
+      return new Promise((resolve, reject) => {
+        utter.onstart = () => {
+          speakingRef.current = true;
+          resolve(true);
+        };
+        utter.onend = () => {
+          speakingRef.current = false;
+        };
+        utter.onerror = (event) => {
+          speakingRef.current = false;
+          reject(new Error(event?.error || "Speech failed."));
+        };
+
+        window.speechSynthesis.speak(utter);
+        setTimeout(() => {
+          if (!window.speechSynthesis.speaking && !speakingRef.current) {
+            resolve(false);
+          }
+        }, 1200);
+      });
+    });
   }, [voices]);
 
   const stopSpeaking = useCallback(() => {

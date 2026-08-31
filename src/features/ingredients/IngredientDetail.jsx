@@ -42,6 +42,13 @@ export default function IngredientDetail() {
   const uses = localized(ingredient, "culinary_uses", lang);
   const benefits = localized(ingredient, "benefits", lang);
   const localNames = [ingredient.name_bm, ingredient.name_zh, ingredient.name_ta].filter(Boolean);
+  const ingredientSpeech = [
+    name,
+    desc,
+    benefits ? `${t("common.benefits")}: ${benefits}` : "",
+    uses ? `${t("common.culinary_uses")}: ${uses}` : "",
+    ingredient.fun_facts ? `${t("common.fun_facts")}: ${ingredient.fun_facts}` : "",
+  ].filter(Boolean).join(". ");
 
   return (
     <Layout>
@@ -69,7 +76,7 @@ export default function IngredientDetail() {
           <div className="p-5">
             <div className="flex items-start justify-between gap-3">
               <p className="text-muted-foreground leading-relaxed flex-1">{desc}</p>
-              <SpeakButton text={`${name}. ${desc}`} />
+              <SpeakButton text={ingredientSpeech} />
             </div>
             {localNames.length > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-2">
