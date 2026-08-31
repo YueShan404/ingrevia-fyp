@@ -58,9 +58,10 @@ export default function Layout({ children }) {
 
       <header className="sticky top-0 z-50 w-full max-w-full bg-white/92 backdrop-blur-xl border-b border-border/60 shadow-sm">
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-center justify-between min-h-20 gap-4">
-            <Link to="/" className="flex min-w-0 items-center shrink-0 group">
-              <Logo size={36} showTagline lang={lang} />
+          <div className="flex min-w-0 items-center justify-between min-h-16 sm:min-h-20 gap-2 sm:gap-4">
+            <Link to="/" className="flex min-w-0 items-center shrink group">
+              <Logo size={32} showTagline lang={lang} className="hidden sm:inline-flex" />
+              <Logo size={34} showWordmark={false} lang={lang} className="sm:hidden" />
             </Link>
 
             {/* Desktop nav */}
@@ -106,7 +107,7 @@ export default function Layout({ children }) {
               </div>
             </nav>
 
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 shrink-0 items-center gap-1.5 sm:gap-2">
               <Link
                 to="/scan"
                 className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold bg-primary text-primary-foreground shadow-md shadow-primary/20 hover:shadow-lg transition-all"
@@ -152,8 +153,12 @@ export default function Layout({ children }) {
                   </>
                 )}
               </div>
-              <AccessibilityPanel open={a11yOpen} setOpen={setA11yOpen} />
-              <LanguageSwitcher />
+              <div className="hidden min-[380px]:block">
+                <AccessibilityPanel open={a11yOpen} setOpen={setA11yOpen} />
+              </div>
+              <div className="hidden min-[430px]:block sm:block">
+                <LanguageSwitcher />
+              </div>
               <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Menu">
                 {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -172,7 +177,7 @@ export default function Layout({ children }) {
         aria-hidden={!mobileOpen}
       />
       <aside
-        className={`lg:hidden fixed top-0 left-0 z-50 h-full w-80 max-w-[85vw] bg-card border-r border-border/60 shadow-[24px_0_60px_-20px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-out will-change-transform ${
+        className={`lg:hidden fixed top-0 left-0 z-50 h-full w-[min(20rem,88vw)] bg-card border-r border-border/60 shadow-[24px_0_60px_-20px_rgba(0,0,0,0.45)] transition-transform duration-300 ease-out will-change-transform ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-hidden={!mobileOpen}

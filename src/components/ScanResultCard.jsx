@@ -38,7 +38,7 @@ export default function ScanResultCard({ result, recipes = [] }) {
     : [];
 
   return (
-    <div className="mt-6 glass-card rounded-3xl border border-border/50 p-6 animate-float-up overflow-hidden">
+    <div className="mt-6 glass-card rounded-2xl sm:rounded-3xl border border-border/50 p-4 sm:p-6 animate-float-up overflow-hidden">
       <h2 className="font-heading font-bold text-lg mb-4 flex items-center gap-2">
         <CheckCircle2 className="w-5 h-5 text-[hsl(126,24%,44%)]" /> {t("scanner.result_title")}
       </h2>
@@ -86,7 +86,7 @@ export default function ScanResultCard({ result, recipes = [] }) {
               <h4 className="font-heading font-bold text-sm mb-2 flex items-center gap-1.5">
                 <BookOpen className="w-3.5 h-3.5 text-[hsl(126,24%,44%)]" /> {t("common.nutrition")} · {t("common.per_100g")}
               </h4>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+              <div className="grid grid-cols-2 min-[420px]:grid-cols-3 sm:grid-cols-5 gap-2">
                 {NUT_CHIPS.map((n) => {
                   const v = ing[n.key];
                   if (v == null) return null;

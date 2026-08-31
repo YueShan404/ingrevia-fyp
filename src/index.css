@@ -91,6 +91,7 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    box-sizing: border-box;
   }
   html,
   body,
@@ -102,6 +103,7 @@
   body {
     @apply bg-background text-foreground font-body antialiased;
     min-width: 0;
+    overscroll-behavior-x: none;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
@@ -177,6 +179,12 @@
   contain: paint;
   pointer-events: none;
   animation: blob-float 14s ease-in-out infinite;
+}
+
+@media (max-width: 640px) {
+  .leaf-blob {
+    display: none;
+  }
 }
 @keyframes blob-float {
   0%, 100% { border-radius: 42% 58% 63% 37% / 41% 44% 56% 59%; transform: translate(0, 0) scale(1); }

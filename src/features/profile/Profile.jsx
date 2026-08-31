@@ -63,7 +63,7 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="grid gap-4 p-5 sm:grid-cols-3 sm:p-6">
+          <div className="grid gap-3 p-5 min-[430px]:grid-cols-3 sm:gap-4 sm:p-6">
             <ProfileStat label={t("profile.recent_scans")} value={scanHistory.length} icon={History} />
             <ProfileStat label={t("profile.saved_recipes")} value={savedCount} icon={ChefHat} />
             <ProfileStat label={t("profile.account_role")} value={roleLabel} icon={Shield} />

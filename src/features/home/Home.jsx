@@ -29,35 +29,35 @@ export default function Home() {
   return (
     <Layout>
       {/* Hero */}
-      <section className="relative overflow-hidden px-5 sm:px-8 lg:px-10 pt-12 pb-14">
+      <section className="relative overflow-hidden px-4 sm:px-8 lg:px-10 pt-9 sm:pt-12 pb-12 sm:pb-14">
         <div className="max-w-6xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/12 border border-primary/20 mb-6 animate-float-up">
+          <div className="inline-flex max-w-full items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-primary/12 border border-primary/20 mb-5 sm:mb-6 animate-float-up">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">Ingrevia 食知途</span>
+            <span className="truncate text-xs sm:text-sm font-medium text-primary">Ingrevia 食知途</span>
           </div>
-          <h1 className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-6xl leading-[1.04] mb-5 animate-float-up" style={{ animationDelay: "0.1s" }}>
+          <h1 className="mx-auto max-w-[18rem] font-heading font-extrabold text-[2.35rem] sm:max-w-4xl sm:text-5xl lg:text-6xl leading-[1.08] sm:leading-[1.04] mb-5 animate-float-up" style={{ animationDelay: "0.1s" }}>
             <span className="text-gradient">{t("home.hero_title")}</span>
           </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8 animate-float-up" style={{ animationDelay: "0.2s" }}>
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-7 sm:mb-8 animate-float-up" style={{ animationDelay: "0.2s" }}>
             {t("home.hero_subtitle")}
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 animate-float-up" style={{ animationDelay: "0.3s" }}>
-            <Link to="/scan" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full brand-gradient text-primary-foreground font-semibold shadow-lg shadow-primary/35 hover:scale-105 transition-transform">
+          <div className="grid w-full max-w-sm grid-cols-1 items-center gap-3 mx-auto sm:flex sm:max-w-none sm:flex-wrap sm:justify-center animate-float-up" style={{ animationDelay: "0.3s" }}>
+            <Link to="/scan" className="inline-flex min-h-12 items-center justify-center gap-2 px-5 sm:px-6 py-3 rounded-full brand-gradient text-primary-foreground font-semibold shadow-lg shadow-primary/35 hover:scale-105 transition-transform">
               <ScanLine className="w-5 h-5" /> {t("home.hero_cta_scan")}
             </Link>
-            <Link to="/encyclopedia" className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-secondary text-foreground font-semibold hover:bg-secondary/70 transition-colors">
+            <Link to="/encyclopedia" className="inline-flex min-h-12 items-center justify-center gap-2 px-5 sm:px-6 py-3 rounded-full bg-secondary text-foreground font-semibold hover:bg-secondary/70 transition-colors">
               <BookOpen className="w-5 h-5" /> {t("home.hero_cta_browse")}
             </Link>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 max-w-xl mx-auto mt-10 animate-float-up" style={{ animationDelay: "0.4s" }}>
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-3 gap-3 sm:gap-4 max-w-xl mx-auto mt-8 sm:mt-10 animate-float-up" style={{ animationDelay: "0.4s" }}>
             {[
               { val: "30", label: t("home.stat_ingredients") },
               { val: "60+", label: t("home.stat_recipes") },
               { val: "4", label: t("home.stat_languages") },
             ].map((s, i) => (
-              <div key={i} className="glass-card rounded-2xl p-4 border border-border/60 min-h-24 flex flex-col items-center justify-center">
+              <div key={i} className="glass-card rounded-2xl p-4 border border-border/60 min-h-20 sm:min-h-24 flex flex-col items-center justify-center">
                 <p className="font-heading font-extrabold text-2xl text-primary">{s.val}</p>
                 <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
               </div>
@@ -91,7 +91,7 @@ export default function Home() {
       )}
 
       {/* Features */}
-      <section className="px-4 sm:px-6 py-12 max-w-7xl mx-auto">
+      <section className="px-4 sm:px-6 py-10 sm:py-12 max-w-7xl mx-auto">
         <h2 className="font-heading font-bold text-2xl text-center mb-8 text-primary">{t("home.features_title")}</h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[
@@ -115,8 +115,8 @@ export default function Home() {
       </section>
 
       {/* SDGs */}
-      <section className="px-4 sm:px-6 py-12 max-w-7xl mx-auto">
-        <div className="forest-gradient rounded-3xl p-8 sm:p-12 text-white">
+      <section className="px-4 sm:px-6 py-10 sm:py-12 max-w-7xl mx-auto">
+        <div className="forest-gradient rounded-2xl sm:rounded-3xl p-5 sm:p-12 text-white">
           <h2 className="font-heading font-bold text-2xl mb-8 text-center">{t("home.sgd_title")}</h2>
           <div className="grid sm:grid-cols-3 gap-6">
             {[

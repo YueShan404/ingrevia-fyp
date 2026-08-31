@@ -42,7 +42,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 min-[430px]:grid-cols-3 gap-3 sm:gap-4 mb-8">
           <StatCard icon={Recycle} value={appliedCount} label={t("dashboard.tips_applied")} color="emerald" />
           <StatCard icon={ChefHat} value={savedRecipes.length} label={t("dashboard.recipes_saved")} color="leaf" />
           <StatCard icon={TrendingUp} value={ecoScore} label={t("dashboard.eco_score")} color="forest" />

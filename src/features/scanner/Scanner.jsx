@@ -218,7 +218,7 @@ export default function Scanner() {
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="text-center mb-8">
           <div className="inline-flex w-16 h-16 rounded-2xl brand-gradient items-center justify-center mb-4 shadow-lg shadow-[hsl(18,71%,42%,0.3)]">
             <ScanLine className="w-8 h-8 text-white" />
@@ -229,12 +229,12 @@ export default function Scanner() {
 
         {/* Upload zone */}
         {!imagePreview && (
-          <div className="glass-card rounded-3xl border-2 border-dashed border-[hsl(18,71%,42%,0.3)] p-10 text-center">
+          <div className="glass-card rounded-2xl sm:rounded-3xl border-2 border-dashed border-[hsl(18,71%,42%,0.3)] p-5 sm:p-10 text-center">
             <div className="w-20 h-20 mx-auto rounded-full bg-[hsl(18,71%,42%,0.1)] flex items-center justify-center mb-5">
               <ImageIcon className="w-10 h-10 text-[hsl(126,24%,44%)]" />
             </div>
             <p className="text-muted-foreground mb-6">{t("scanner.no_image")}</p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            <div className="grid w-full grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-center">
               <button onClick={() => fileRef.current?.click()}
                 className="inline-flex items-center gap-2 px-5 py-3 rounded-full brand-gradient text-white font-semibold shadow-md hover:scale-105 transition-transform">
                 <Upload className="w-5 h-5" /> {t("scanner.upload")}
@@ -253,7 +253,7 @@ export default function Scanner() {
 
         {/* Preview + analyzing */}
         {imagePreview && (
-          <div className="glass-card rounded-3xl overflow-hidden border border-border/50">
+          <div className="glass-card rounded-2xl sm:rounded-3xl overflow-hidden border border-border/50">
             <div className="relative">
               <img src={imagePreview} alt="scan" className="w-full max-h-80 object-contain bg-black/5" />
               {analyzing && (
