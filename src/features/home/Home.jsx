@@ -118,8 +118,9 @@ export default function Home() {
       <section className="px-4 sm:px-6 py-10 sm:py-12 max-w-7xl mx-auto">
         <div className="forest-gradient rounded-2xl sm:rounded-3xl p-5 sm:p-12 text-white">
           <h2 className="font-heading font-bold text-2xl mb-8 text-center">{t("home.sgd_title")}</h2>
-          <div className="grid sm:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
+              { num: "2", t: t("home.sgd_2"), d: t("home.sgd_2_d") },
               { num: "3", t: t("home.sgd_3"), d: t("home.sgd_3_d") },
               { num: "4", t: t("home.sgd_4"), d: t("home.sgd_4_d") },
               { num: "12", t: t("home.sgd_12"), d: t("home.sgd_12_d") },

@@ -260,7 +260,7 @@ export default function Layout({ children }) {
             </div>
           </div>
           <div className="border-t border-white/15 mt-8 pt-6 text-center text-xs text-white/50">
-            {t("footer.rights")} · SDG 3 · SDG 4 · SDG 12
+            {t("footer.rights")} - SDG 2 - SDG 3 - SDG 4 - SDG 12
           </div>
         </div>
       </footer>
