@@ -1,0 +1,18 @@
+{
+  "name": "Ingrevia 食知途",
+  "short_name": "Ingrevia",
+  "description": "AI-assisted multilingual Malaysian ingredient recognition and recipe learning.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fffaf7",
+  "theme_color": "#c4511f",
+  "icons": [
+    {
+      "src": "/ingrevia-logo-source.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
