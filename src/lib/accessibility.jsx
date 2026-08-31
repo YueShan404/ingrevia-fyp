@@ -6,6 +6,7 @@ export function AccessibilityProvider({ children }) {
   const [ttsEnabled, setTtsEnabled] = useState(() => localStorage.getItem("ingrevia_tts") === "true");
   const [highContrast, setHighContrast] = useState(() => localStorage.getItem("ingrevia_contrast") === "true");
   const [largeFont, setLargeFont] = useState(() => localStorage.getItem("ingrevia_large") === "true");
+  const [voices, setVoices] = useState([]);
   const speakingRef = useRef(false);
 
   useEffect(() => { localStorage.setItem("ingrevia_tts", ttsEnabled); }, [ttsEnabled]);
@@ -18,18 +19,45 @@ export function AccessibilityProvider({ children }) {
     document.documentElement.classList.toggle("large-font", largeFont);
   }, [largeFont]);
 
-  const speak = useCallback((text, lang) => {
-    if (!text) return;
+  useEffect(() => {
     if (!("speechSynthesis" in window)) return;
+
+    const loadVoices = () => {
+      setVoices(window.speechSynthesis.getVoices());
+    };
+
+    loadVoices();
+    window.speechSynthesis.addEventListener?.("voiceschanged", loadVoices);
+
+    return () => {
+      window.speechSynthesis.removeEventListener?.("voiceschanged", loadVoices);
+    };
+  }, []);
+
+  const speak = useCallback((text, lang) => {
+    const cleanText = String(text || "").replace(/\s+/g, " ").trim();
+    if (!cleanText) return false;
+    if (!("speechSynthesis" in window)) return false;
+
     window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(text);
     const langMap = { en: "en-US", bm: "ms-MY", zh: "zh-CN", ta: "ta-IN" };
-    utter.lang = langMap[lang] || "en-US";
+    const speechLang = langMap[lang] || "en-US";
+    const availableVoices = voices.length ? voices : window.speechSynthesis.getVoices();
+    const matchingVoice =
+      availableVoices.find((voice) => voice.lang === speechLang) ||
+      availableVoices.find((voice) => voice.lang?.toLowerCase().startsWith(speechLang.slice(0, 2).toLowerCase()));
+
+    const utter = new SpeechSynthesisUtterance(cleanText);
+    utter.lang = matchingVoice?.lang || speechLang;
+    if (matchingVoice) utter.voice = matchingVoice;
     utter.rate = 0.95;
+    utter.pitch = 1;
     utter.onstart = () => { speakingRef.current = true; };
     utter.onend = () => { speakingRef.current = false; };
+    utter.onerror = () => { speakingRef.current = false; };
     window.speechSynthesis.speak(utter);
-  }, []);
+    return true;
+  }, [voices]);
 
   const stopSpeaking = useCallback(() => {
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
@@ -40,6 +68,7 @@ export function AccessibilityProvider({ children }) {
     ttsEnabled, setTtsEnabled,
     highContrast, setHighContrast,
     largeFont, setLargeFont,
+    ttsSupported: typeof window !== "undefined" && "speechSynthesis" in window,
     speak, stopSpeaking,
   };
   return <AccessibilityContext.Provider value={value}>{children}</AccessibilityContext.Provider>;
