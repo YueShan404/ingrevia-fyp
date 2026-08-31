@@ -2,6 +2,8 @@ import React, { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
 import { useI18n, localized } from "@/lib/i18n";
+import { useAuth } from "@/lib/AuthContext";
+import { useToast } from "@/components/ui/use-toast";
 import Layout from "@/components/Layout";
 import { ScanLine, Upload, Camera, Search, ArrowRight, Image as ImageIcon } from "lucide-react";
 import ScanResultCard from "@/components/ScanResultCard";
@@ -87,6 +89,8 @@ const fallbackRecognize = ({ file, ingredients, imageUrl, cause }) => {
 
 export default function Scanner() {
   const { t, lang } = useI18n();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const fileRef = useRef(null);
   const cameraRef = useRef(null);
@@ -184,23 +188,27 @@ export default function Scanner() {
       };
       setResult(scanResult);
 
-      // Save to scan history
+      // Save to scan history for the current user.
       const canSaveHistory = file_url && !file_url.startsWith("data:");
-      if (scanResult.matchedIngredient && canSaveHistory) {
-        appApi.entities.ScanHistory.create({
-          ingredient_name: scanResult.matchedIngredient.name,
-          ingredient_id: scanResult.matchedIngredient.id,
-          image_url: file_url,
-          confidence,
-          matched: true,
-        }).catch(() => {});
-      } else if (llmResult.ingredient_name && canSaveHistory) {
-        appApi.entities.ScanHistory.create({
-          ingredient_name: llmResult.ingredient_name,
-          image_url: file_url,
-          confidence,
-          matched: false,
-        }).catch(() => {});
+      const historyName = scanResult.matchedIngredient?.name || llmResult.ingredient_name;
+      if (historyName && canSaveHistory) {
+        try {
+          await appApi.entities.ScanHistory.create({
+            ingredient_name: historyName,
+            ingredient_id: scanResult.matchedIngredient?.id || null,
+            image_url: file_url,
+            confidence,
+            matched: Boolean(scanResult.matchedIngredient),
+            user_id: user?.id,
+          });
+        } catch (historyError) {
+          console.warn("Unable to save scan history.", historyError);
+          toast({
+            title: t("history.save_failed"),
+            description: historyError?.message || t("history.save_failed_body"),
+            variant: "destructive",
+          });
+        }
       }
     } catch (err) {
       setResult({

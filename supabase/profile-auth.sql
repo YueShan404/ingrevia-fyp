@@ -63,17 +63,13 @@ begin
     normalized_email,
     coalesce(new.raw_user_meta_data ->> 'full_name', new.raw_user_meta_data ->> 'name'),
     case when normalized_email = 'shanyuew416@gmail.com' then 'admin' else 'user' end,
-    case
-      when normalized_email = 'shanyuew416@gmail.com' then 'active'
-      when provider = 'email' then 'active'
-      else 'pending'
-    end
+    'active'
   )
   on conflict (id) do update
     set email = excluded.email,
         full_name = coalesce(excluded.full_name, public.profiles.full_name),
         role = case when excluded.email = 'shanyuew416@gmail.com' then 'admin' else public.profiles.role end,
-        status = case when excluded.email = 'shanyuew416@gmail.com' then 'active' else public.profiles.status end,
+        status = case when public.profiles.status = 'blocked' then 'blocked' else 'active' end,
         updated_date = now();
 
   return new;
@@ -99,18 +95,14 @@ select
   lower(u.email),
   coalesce(u.raw_user_meta_data ->> 'full_name', u.raw_user_meta_data ->> 'name'),
   case when lower(u.email) = 'shanyuew416@gmail.com' then 'admin' else 'user' end,
-  case
-    when lower(u.email) = 'shanyuew416@gmail.com' then 'active'
-    when coalesce(u.raw_app_meta_data ->> 'provider', 'email') = 'email' then 'active'
-    else 'pending'
-  end
+  'active'
 from auth.users u
 where u.email is not null
 on conflict (id) do update
   set email = excluded.email,
       full_name = coalesce(excluded.full_name, public.profiles.full_name),
       role = case when excluded.email = 'shanyuew416@gmail.com' then 'admin' else public.profiles.role end,
-      status = case when excluded.email = 'shanyuew416@gmail.com' then 'active' else public.profiles.status end,
+      status = case when public.profiles.status = 'blocked' then 'blocked' else 'active' end,
       updated_date = now();
 
 drop policy if exists "Users can read own profile" on public.profiles;
