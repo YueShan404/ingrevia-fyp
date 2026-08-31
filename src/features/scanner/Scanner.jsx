@@ -145,6 +145,9 @@ export default function Scanner() {
       if (file_url && !file_url.startsWith("data:")) {
         try {
           const response = await appApi.functions.invoke("recognizeIngredient", { image_url: file_url });
+          if (response.data?.error) {
+            throw new Error(response.data.message || "AI recognition failed.");
+          }
           llmResult = response.data;
         } catch (err) {
           recognitionError = err;
@@ -174,6 +177,9 @@ export default function Scanner() {
         matched,
         image_url: file_url,
         fallback: Boolean(llmResult.fallback),
+        source: llmResult.source || "catalogue_fallback",
+        detected_category: llmResult.detected_category || "",
+        common_names: llmResult.common_names || [],
         suggestions: llmResult.suggestions || [],
       };
       setResult(scanResult);

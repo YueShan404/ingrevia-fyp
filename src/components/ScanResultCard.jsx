@@ -169,7 +169,26 @@ export default function ScanResultCard({ result, recipes = [] }) {
           <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
           <div>
             <p className="font-semibold">{result?.ingredient_name ? result.ingredient_name : t("scanner.not_matched")}</p>
+            {result?.source === "openai_vision" && (
+              <p className="mt-1 text-xs font-semibold text-primary">
+                AI detected this ingredient, but it is not in your Ingrevia catalogue yet.
+              </p>
+            )}
             <p className="text-sm text-muted-foreground mt-1">{result?.description}</p>
+            {(result?.detected_category || result?.common_names?.length > 0) && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {result.detected_category && (
+                  <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground">
+                    {result.detected_category}
+                  </span>
+                )}
+                {result.common_names?.slice(0, 4).map((name) => (
+                  <span key={name} className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground">
+                    {name}
+                  </span>
+                ))}
+              </div>
+            )}
             {result?.confidence < 40 && result?.confidence > 0 && (
               <p className="text-xs text-amber-600 mt-2">{t("scanner.low_confidence")}</p>
             )}
