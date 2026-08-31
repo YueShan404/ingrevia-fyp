@@ -115,12 +115,10 @@ export const appApi = {
         );
       }
 
-      if (profile.status !== "active") {
+      if (profile.status === "blocked") {
         throw createAuthError(
-          profile.status === "blocked" ? "account_blocked" : "account_pending",
-          profile.status === "blocked"
-            ? "This account is blocked. Please contact the administrator."
-            : "Your account is pending approval.",
+          "account_blocked",
+          "This account is blocked. Please contact the administrator.",
           { authUser: user, profile }
         );
       }

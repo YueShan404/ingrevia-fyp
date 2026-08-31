@@ -41,18 +41,12 @@ export default function ProtectedRoute({ children, fallback = <DefaultFallback /
         </div>
       );
     }
-    if (authError.type === 'account_pending' || authError.type === 'account_blocked') {
+    if (authError.type === 'account_blocked') {
       return (
         <div className="min-h-screen flex items-center justify-center px-4 bg-background">
           <div className="max-w-md text-center rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <h1 className="font-heading text-2xl font-bold mb-2">
-              {authError.type === 'account_blocked' ? 'Account blocked' : 'Account pending approval'}
-            </h1>
-            <p className="text-sm text-muted-foreground mb-5">
-              {authError.type === 'account_blocked'
-                ? authError.message
-                : 'You are logged in, but this account is waiting for admin approval before protected features can open.'}
-            </p>
+            <h1 className="font-heading text-2xl font-bold mb-2">Account blocked</h1>
+            <p className="text-sm text-muted-foreground mb-5">{authError.message}</p>
             <Link to="/" className="inline-flex h-10 items-center justify-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground">
               Back to Home
             </Link>
