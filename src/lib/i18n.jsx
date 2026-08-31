@@ -30,5 +30,17 @@ export function useI18n() {
 export function localized(entity, field, lang) {
   if (!entity) return "";
   const suffix = { en: "", bm: "_bm", zh: "_zh", ta: "_ta" }[lang] || "";
-  return entity[`${field}${suffix}`] || entity[field] || "";
+  const localizedValue = entity[`${field}${suffix}`];
+  const fallbackValue = entity[field];
+
+  if (Array.isArray(localizedValue)) {
+    return localizedValue.length > 0 ? localizedValue : fallbackValue || [];
+  }
+
+  if (typeof localizedValue === "string") {
+    const trimmed = localizedValue.trim();
+    return trimmed ? localizedValue : fallbackValue || "";
+  }
+
+  return localizedValue ?? fallbackValue ?? "";
 }
