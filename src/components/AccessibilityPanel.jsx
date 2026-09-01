@@ -5,8 +5,16 @@ import { useAccessibility } from "@/lib/accessibility";
 import { Accessibility, Volume2, Contrast, Type, X } from "lucide-react";
 
 export default function AccessibilityPanel({ open, setOpen }) {
-  const { t } = useI18n();
-  const { ttsEnabled, setTtsEnabled, highContrast, setHighContrast, largeFont, setLargeFont } = useAccessibility();
+  const { t, lang } = useI18n();
+  const { ttsEnabled, setTtsEnabled, highContrast, setHighContrast, largeFont, setLargeFont, ttsSupported, speak, stopSpeaking } = useAccessibility();
+
+  const readPage = async () => {
+    const pageText = document.querySelector("main")?.innerText || document.body.innerText;
+    const cleanText = pageText.replace(/\s+/g, " ").trim();
+    if (!cleanText || !ttsSupported) return;
+    setTtsEnabled(true);
+    await speak(cleanText, lang);
+  };
 
   return (
     <>
@@ -31,6 +39,24 @@ export default function AccessibilityPanel({ open, setOpen }) {
               {/* TTS */}
               <ToggleRow icon={Volume2} label={t("accessibility.tts")} desc={t("accessibility.tts_hint")}
                 on={ttsEnabled} onToggle={() => setTtsEnabled(!ttsEnabled)} onLabel={t("accessibility.tts_on")} offLabel={t("accessibility.tts_off")} />
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={readPage}
+                  disabled={!ttsSupported}
+                  className="rounded-2xl bg-[hsl(85,54%,51%,0.18)] px-3 py-2.5 text-sm font-semibold text-[hsl(128,52%,35%)] transition-colors hover:bg-[hsl(85,54%,51%,0.28)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {t("tts.listen")}
+                </button>
+                <button
+                  type="button"
+                  onClick={stopSpeaking}
+                  disabled={!ttsSupported}
+                  className="rounded-2xl bg-secondary px-3 py-2.5 text-sm font-semibold text-foreground/75 transition-colors hover:bg-secondary/70 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {t("tts.stop")}
+                </button>
+              </div>
               {/* High contrast */}
               <ToggleRow icon={Contrast} label={t("accessibility.contrast")}
                 on={highContrast} onToggle={() => setHighContrast(!highContrast)} onLabel={t("accessibility.contrast_on")} offLabel={t("accessibility.contrast_off")} />

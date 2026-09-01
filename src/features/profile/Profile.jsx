@@ -13,7 +13,6 @@ import {
   History,
   ScanLine,
   Shield,
-  UserCircle,
   Sparkles,
 } from "lucide-react";
 

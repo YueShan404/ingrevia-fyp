@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, localized } from "@/lib/i18n";
 import { useCommunityFavorites } from "@/lib/favorites";
 import { Image } from "@/components/ui/image";
 import RecipeShareButton from "@/components/RecipeShareButton";
@@ -12,9 +12,11 @@ import { Clock, Bookmark } from "lucide-react";
  * contributor, cook time, and a bookmark button.
  */
 export default function CommunityRecipeCard({ recipe, index = 0 }) {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const { isFavorite, toggleFavorite } = useCommunityFavorites();
   const fav = isFavorite(recipe.id);
+  const title = localized(recipe, "title", lang);
+  const description = localized(recipe, "description", lang);
 
   // Approx cook time (community recipes don't carry numeric times)
   const cookTime = recipe.cook_time ?? recipe.prep_time ?? null;
@@ -35,7 +37,7 @@ export default function CommunityRecipeCard({ recipe, index = 0 }) {
         {/* Image */}
         <div className="relative w-full sm:w-44 h-40 sm:h-auto sm:min-h-[180px] shrink-0 overflow-hidden bg-secondary">
           {recipe.image_url ? (
-            <Image src={recipe.image_url} fittingType="fill" className="w-full h-full group-hover:scale-105 transition-transform duration-500" alt={recipe.title} />
+            <Image src={recipe.image_url} fittingType="fill" className="w-full h-full group-hover:scale-105 transition-transform duration-500" alt={title} />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Clock className="w-10 h-10 text-muted-foreground/40" />
@@ -51,7 +53,7 @@ export default function CommunityRecipeCard({ recipe, index = 0 }) {
                 {t(`kitchen.cuisines.${recipe.cuisine}`) || recipe.cuisine}
               </span>
               <h3 className="font-heading font-bold text-lg sm:text-xl text-foreground group-hover:text-primary transition-colors leading-snug">
-                {recipe.title}
+                {title}
               </h3>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -74,8 +76,8 @@ export default function CommunityRecipeCard({ recipe, index = 0 }) {
             </div>
           </div>
 
-          {recipe.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">{recipe.description}</p>
+          {description && (
+            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mt-2">{description}</p>
           )}
 
           <div className="editorial-divider my-3" />

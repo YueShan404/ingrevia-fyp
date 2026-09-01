@@ -189,6 +189,10 @@ export default function Layout({ children }) {
           </button>
         </div>
         <nav className="p-4 flex flex-col gap-1 overflow-y-auto max-h-[calc(100%-4.25rem)]">
+          <div className="mb-3 flex items-center justify-between rounded-2xl border border-border/60 bg-secondary/40 p-3">
+            <span className="text-sm font-semibold text-foreground/80">{t("accessibility.title")}</span>
+            <AccessibilityPanel open={a11yOpen} setOpen={setA11yOpen} />
+          </div>
           <div className="grid grid-cols-2 gap-2 mb-3 sm:hidden">
             {isAuthenticated ? (
               <>

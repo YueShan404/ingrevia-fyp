@@ -68,6 +68,41 @@ export default function SubmitRecipe() {
     }
     setSubmitting(true);
     try {
+      const ingredients = form.ingredients.split("\n").map((l) => l.trim()).filter(Boolean);
+      const steps = form.steps.split("\n").map((l) => l.trim()).filter(Boolean);
+      const recipeText = {
+        title: form.title,
+        description: form.description,
+        ingredients,
+        steps,
+        zero_waste_tip: form.zero_waste_tip,
+      };
+      let autoTranslations = {};
+
+      try {
+        const resp = await appApi.functions.invoke("translateRecipeContent", recipeText);
+        const translated = resp?.data || {};
+        autoTranslations = {
+          title_bm: translated.bm?.title,
+          title_zh: translated.zh?.title,
+          title_ta: translated.ta?.title,
+          description_bm: translated.bm?.description,
+          description_zh: translated.zh?.description,
+          description_ta: translated.ta?.description,
+          ingredients_bm: translated.bm?.ingredients || [],
+          ingredients_zh: translated.zh?.ingredients || [],
+          ingredients_ta: translated.ta?.ingredients || [],
+          steps_bm: translated.bm?.steps || [],
+          steps_zh: translated.zh?.steps || [],
+          steps_ta: translated.ta?.steps || [],
+          zero_waste_tip_bm: translated.bm?.zero_waste_tip,
+          zero_waste_tip_zh: translated.zh?.zero_waste_tip,
+          zero_waste_tip_ta: translated.ta?.zero_waste_tip,
+        };
+      } catch (translationError) {
+        console.warn("Recipe auto-translation failed; saving original recipe only.", translationError);
+      }
+
       await appApi.entities.CommunityRecipe.create({
         title: form.title,
         author: form.author,
@@ -75,8 +110,8 @@ export default function SubmitRecipe() {
         image_url: images[0]?.url,
         image_urls: images.map((image) => image.url),
         description: form.description,
-        ingredients: form.ingredients.split("\n").filter((l) => l.trim()),
-        steps: form.steps.split("\n").filter((l) => l.trim()),
+        ingredients,
+        steps,
         main_ingredient_tags: mainTags,
         spice_level: form.spice_level,
         prep_time: Number(form.prep_time) || null,
@@ -84,6 +119,7 @@ export default function SubmitRecipe() {
         servings: Number(form.servings) || 2,
         zero_waste_tip: form.zero_waste_tip,
         status: "pending",
+        ...autoTranslations,
       });
       setSubmitted(true);
     } catch (err) {

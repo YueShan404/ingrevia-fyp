@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
-import { useI18n } from "@/lib/i18n";
+import { useI18n, localized } from "@/lib/i18n";
 import { useCommunityFavorites } from "@/lib/favorites";
 import Layout from "@/components/Layout";
 import SpeakButton from "@/components/SpeakButton";
@@ -46,15 +46,18 @@ export default function CommunityRecipeDetail() {
     );
 
   const fav = isFavorite(recipe.id);
-  const ingredients = recipe.ingredients || [];
-  const steps = recipe.steps || [];
+  const title = localized(recipe, "title", lang);
+  const description = localized(recipe, "description", lang);
+  const ingredients = localized(recipe, "ingredients", lang) || [];
+  const steps = localized(recipe, "steps", lang) || [];
+  const zeroWaste = localized(recipe, "zero_waste_tip", lang);
   const cookTime = recipe.cook_time ?? recipe.prep_time ?? null;
   const recipeSpeech = [
-    recipe.title,
-    recipe.description,
+    title,
+    description,
     `${t("common.ingredients")}: ${ingredients.join(". ")}`,
     `${t("common.steps")}: ${steps.join(". ")}`,
-    recipe.zero_waste_tip ? `${t("recipe_detail.zero_waste_title")}: ${recipe.zero_waste_tip}` : "",
+    zeroWaste ? `${t("recipe_detail.zero_waste_title")}: ${zeroWaste}` : "",
   ].filter(Boolean).join(". ");
 
   return (
@@ -71,7 +74,7 @@ export default function CommunityRecipeDetail() {
         <div className="glass-card rounded-3xl overflow-hidden border border-border/60 mb-6">
           <div className="relative h-56 sm:h-64">
             {recipe.image_url ? (
-              <Image src={recipe.image_url} fittingType="fill" className="w-full h-full" alt={recipe.title} />
+              <Image src={recipe.image_url} fittingType="fill" className="w-full h-full" alt={title} />
             ) : (
               <div className="w-full h-full brand-gradient" />
             )}
@@ -80,12 +83,12 @@ export default function CommunityRecipeDetail() {
               <span className="inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-white/90 text-primary mb-2">
                 {t(`kitchen.cuisines.${recipe.cuisine}`) || recipe.cuisine}
               </span>
-              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl drop-shadow-lg">{recipe.title}</h1>
+              <h1 className="font-heading font-extrabold text-2xl sm:text-3xl drop-shadow-lg">{title}</h1>
             </div>
           </div>
           <div className="p-5">
             <div className="flex items-start justify-between gap-3">
-              <p className="text-muted-foreground leading-relaxed flex-1 text-sm">{recipe.description}</p>
+              <p className="text-muted-foreground leading-relaxed flex-1 text-sm">{description}</p>
               <div className="flex shrink-0 items-center gap-2">
                 <SpeakButton text={recipeSpeech} />
                 <button
@@ -165,7 +168,7 @@ export default function CommunityRecipeDetail() {
         )}
 
         {/* Zero-waste tip */}
-        {recipe.zero_waste_tip && (
+        {zeroWaste && (
           <div className="glass-card rounded-3xl border border-accent/25 bg-accent/5 p-5 mb-6">
             <div className="flex items-start gap-3">
               <div className="shrink-0 w-11 h-11 rounded-2xl bg-accent/15 flex items-center justify-center">
@@ -174,7 +177,7 @@ export default function CommunityRecipeDetail() {
               <div className="flex-1">
                 <h2 className="font-heading font-bold text-base mb-1 text-accent">{t("recipe_detail.zero_waste_title")}</h2>
                 <p className="text-xs text-muted-foreground mb-2">{t("recipe_detail.zero_waste_subtitle")}</p>
-                <p className="text-sm leading-relaxed">{recipe.zero_waste_tip}</p>
+                <p className="text-sm leading-relaxed">{zeroWaste}</p>
               </div>
             </div>
           </div>
