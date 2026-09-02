@@ -231,6 +231,11 @@ const en = {
   "admin.translate_recipe": "Translate recipe",
   "admin.translate_recipe_success": "Recipe translations were updated.",
   "admin.translate_recipe_error": "Recipe translation failed.",
+  "admin.translate_all_recipes": "Translate Missing Recipes",
+  "admin.translate_all_hint": "Automatically fill missing Malay, Chinese, and Tamil recipe fields.",
+  "admin.translate_all_progress": "Translating {done}/{total}",
+  "admin.translate_all_success": "Translated {count} recipes.",
+  "admin.translate_all_none": "All recipes already have translations.",
   "admin.access_denied": "Admin access required",
   "admin.access_denied_body": "This page is only available to the configured Ingrevia administrator.",
   "accessibility.title": "Accessibility",
@@ -1143,6 +1148,11 @@ const bmOverrides = {
   "admin.translate_recipe": "Terjemah resipi",
   "admin.translate_recipe_success": "Terjemahan resipi telah dikemas kini.",
   "admin.translate_recipe_error": "Terjemahan resipi gagal.",
+  "admin.translate_all_recipes": "Terjemah Resipi Yang Belum Lengkap",
+  "admin.translate_all_hint": "Isi medan resipi Melayu, Cina dan Tamil yang masih kosong secara automatik.",
+  "admin.translate_all_progress": "Menterjemah {done}/{total}",
+  "admin.translate_all_success": "{count} resipi telah diterjemah.",
+  "admin.translate_all_none": "Semua resipi sudah mempunyai terjemahan.",
 };
 
 const zhOverrides = {
@@ -1175,6 +1185,11 @@ const zhOverrides = {
   "admin.translate_recipe": "翻译食谱",
   "admin.translate_recipe_success": "食谱翻译已更新。",
   "admin.translate_recipe_error": "食谱翻译失败。",
+  "admin.translate_all_recipes": "翻译缺少内容的食谱",
+  "admin.translate_all_hint": "自动补齐缺少的马来文、中文和泰米尔文食谱字段。",
+  "admin.translate_all_progress": "正在翻译 {done}/{total}",
+  "admin.translate_all_success": "已翻译 {count} 个食谱。",
+  "admin.translate_all_none": "所有食谱已有翻译。",
 };
 
 const taOverrides = {
@@ -1207,6 +1222,11 @@ const taOverrides = {
   "admin.translate_recipe": "சமையலை மொழிபெயர்",
   "admin.translate_recipe_success": "சமையல் மொழிபெயர்ப்புகள் புதுப்பிக்கப்பட்டன.",
   "admin.translate_recipe_error": "சமையல் மொழிபெயர்ப்பு தோல்வியடைந்தது.",
+  "admin.translate_all_recipes": "முழுமையற்ற சமையல்களை மொழிபெயர்",
+  "admin.translate_all_hint": "காலியாக உள்ள மலாய், சீனம் மற்றும் தமிழ் சமையல் புலங்களை தானாக நிரப்பவும்.",
+  "admin.translate_all_progress": "மொழிபெயர்க்கிறது {done}/{total}",
+  "admin.translate_all_success": "{count} சமையல்கள் மொழிபெயர்க்கப்பட்டன.",
+  "admin.translate_all_none": "அனைத்து சமையல்களுக்கும் மொழிபெயர்ப்பு உள்ளது.",
 };
 
 export const translations = {

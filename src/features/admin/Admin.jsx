@@ -19,6 +19,8 @@ export default function Admin() {
   const bulkFileRef = useRef(null);
   const [bulkImporting, setBulkImporting] = useState(false);
   const [translatingRecipeId, setTranslatingRecipeId] = useState(null);
+  const [bulkTranslating, setBulkTranslating] = useState(false);
+  const [bulkTranslateProgress, setBulkTranslateProgress] = useState({ done: 0, total: 0 });
 
   const loadAll = () => {
     Promise.all([
@@ -69,36 +71,55 @@ export default function Admin() {
     await appApi.entities.Recipe.delete(id);
     loadAll();
   };
+
+  const recipeHasMissingTranslations = (recipe) => {
+    const translatedTextFields = [
+      "title_bm", "title_zh", "title_ta",
+      "description_bm", "description_zh", "description_ta",
+      "zero_waste_tip_bm", "zero_waste_tip_zh", "zero_waste_tip_ta",
+    ];
+    const translatedListFields = [
+      "ingredients_bm", "ingredients_zh", "ingredients_ta",
+      "steps_bm", "steps_zh", "steps_ta",
+    ];
+
+    return translatedTextFields.some((field) => recipe[field] == null || String(recipe[field]).trim() === "") ||
+      translatedListFields.some((field) => !Array.isArray(recipe[field]) || recipe[field].length === 0);
+  };
+
+  const translateRecipeRecord = async (recipe) => {
+    const resp = await appApi.functions.invoke("translateRecipeContent", {
+      title: recipe.title,
+      description: recipe.description,
+      ingredients: recipe.ingredients || [],
+      steps: recipe.steps || [],
+      zero_waste_tip: recipe.zero_waste_tip,
+    });
+    const translated = resp?.data || {};
+
+    await appApi.entities.Recipe.update(recipe.id, {
+      title_bm: translated.bm?.title || recipe.title_bm,
+      title_zh: translated.zh?.title || recipe.title_zh,
+      title_ta: translated.ta?.title || recipe.title_ta,
+      description_bm: translated.bm?.description || recipe.description_bm,
+      description_zh: translated.zh?.description || recipe.description_zh,
+      description_ta: translated.ta?.description || recipe.description_ta,
+      ingredients_bm: translated.bm?.ingredients || recipe.ingredients_bm || [],
+      ingredients_zh: translated.zh?.ingredients || recipe.ingredients_zh || [],
+      ingredients_ta: translated.ta?.ingredients || recipe.ingredients_ta || [],
+      steps_bm: translated.bm?.steps || recipe.steps_bm || [],
+      steps_zh: translated.zh?.steps || recipe.steps_zh || [],
+      steps_ta: translated.ta?.steps || recipe.steps_ta || [],
+      zero_waste_tip_bm: translated.bm?.zero_waste_tip || recipe.zero_waste_tip_bm,
+      zero_waste_tip_zh: translated.zh?.zero_waste_tip || recipe.zero_waste_tip_zh,
+      zero_waste_tip_ta: translated.ta?.zero_waste_tip || recipe.zero_waste_tip_ta,
+    });
+  };
+
   const translateRecipe = async (recipe) => {
     setTranslatingRecipeId(recipe.id);
     try {
-      const resp = await appApi.functions.invoke("translateRecipeContent", {
-        title: recipe.title,
-        description: recipe.description,
-        ingredients: recipe.ingredients || [],
-        steps: recipe.steps || [],
-        zero_waste_tip: recipe.zero_waste_tip,
-      });
-      const translated = resp?.data || {};
-
-      await appApi.entities.Recipe.update(recipe.id, {
-        title_bm: translated.bm?.title || recipe.title_bm,
-        title_zh: translated.zh?.title || recipe.title_zh,
-        title_ta: translated.ta?.title || recipe.title_ta,
-        description_bm: translated.bm?.description || recipe.description_bm,
-        description_zh: translated.zh?.description || recipe.description_zh,
-        description_ta: translated.ta?.description || recipe.description_ta,
-        ingredients_bm: translated.bm?.ingredients || recipe.ingredients_bm || [],
-        ingredients_zh: translated.zh?.ingredients || recipe.ingredients_zh || [],
-        ingredients_ta: translated.ta?.ingredients || recipe.ingredients_ta || [],
-        steps_bm: translated.bm?.steps || recipe.steps_bm || [],
-        steps_zh: translated.zh?.steps || recipe.steps_zh || [],
-        steps_ta: translated.ta?.steps || recipe.steps_ta || [],
-        zero_waste_tip_bm: translated.bm?.zero_waste_tip || recipe.zero_waste_tip_bm,
-        zero_waste_tip_zh: translated.zh?.zero_waste_tip || recipe.zero_waste_tip_zh,
-        zero_waste_tip_ta: translated.ta?.zero_waste_tip || recipe.zero_waste_tip_ta,
-      });
-
+      await translateRecipeRecord(recipe);
       toast({ title: t("admin.translate_recipe"), description: t("admin.translate_recipe_success") });
       loadAll();
     } catch (err) {
@@ -109,6 +130,43 @@ export default function Admin() {
       });
     } finally {
       setTranslatingRecipeId(null);
+    }
+  };
+
+  const translateMissingRecipes = async () => {
+    const targets = recipes.filter(recipeHasMissingTranslations);
+    if (targets.length === 0) {
+      toast({ title: t("admin.translate_all_recipes"), description: t("admin.translate_all_none") });
+      return;
+    }
+
+    setBulkTranslating(true);
+    setBulkTranslateProgress({ done: 0, total: targets.length });
+    let translatedCount = 0;
+
+    try {
+      for (const recipe of targets) {
+        setTranslatingRecipeId(recipe.id);
+        await translateRecipeRecord(recipe);
+        translatedCount += 1;
+        setBulkTranslateProgress({ done: translatedCount, total: targets.length });
+      }
+      toast({
+        title: t("admin.translate_all_recipes"),
+        description: (t("admin.translate_all_success") || "").replace("{count}", String(translatedCount)),
+      });
+      loadAll();
+    } catch (err) {
+      toast({
+        title: t("admin.translate_recipe_error"),
+        description: err?.message || "Translation failed",
+        variant: "destructive",
+      });
+      loadAll();
+    } finally {
+      setBulkTranslating(false);
+      setTranslatingRecipeId(null);
+      setBulkTranslateProgress({ done: 0, total: 0 });
     }
   };
   const approveCommunity = async (id) => {
@@ -196,23 +254,38 @@ export default function Admin() {
               })} t={t} />
           </>
         ) : tab === "recipes" ? (
-          <AdminList items={recipes} onDelete={deleteRecipe}
-            render={(item) => ({
-              title: localized(item, "title", lang),
-              subtitle: t(`kitchen.cuisines.${item.cuisine}`),
-              image: item.image_url,
-              action: (
-                <button
-                  onClick={() => translateRecipe(item)}
-                  disabled={translatingRecipeId === item.id}
-                  className="shrink-0 p-2 rounded-full bg-secondary text-primary hover:scale-110 transition-transform disabled:opacity-60"
-                  aria-label={t("admin.translate_recipe")}
-                  title={t("admin.translate_recipe")}
-                >
-                  <Languages className="w-4 h-4" />
-                </button>
-              ),
-            })} t={t} />
+          <>
+            <div className="mb-4 flex flex-col items-end gap-1.5">
+              <button
+                onClick={translateMissingRecipes}
+                disabled={bulkTranslating || recipes.length === 0}
+                className="inline-flex items-center gap-2 rounded-full bg-[hsl(18,71%,42%)] px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-transform hover:scale-105 disabled:opacity-60"
+              >
+                <Languages className="w-4 h-4" />
+                {bulkTranslating
+                  ? (t("admin.translate_all_progress") || "").replace("{done}", String(bulkTranslateProgress.done)).replace("{total}", String(bulkTranslateProgress.total))
+                  : t("admin.translate_all_recipes")}
+              </button>
+              <p className="max-w-md text-right text-xs text-muted-foreground">{t("admin.translate_all_hint")}</p>
+            </div>
+            <AdminList items={recipes} onDelete={deleteRecipe}
+              render={(item) => ({
+                title: localized(item, "title", lang),
+                subtitle: t(`kitchen.cuisines.${item.cuisine}`),
+                image: item.image_url,
+                action: (
+                  <button
+                    onClick={() => translateRecipe(item)}
+                    disabled={bulkTranslating || translatingRecipeId === item.id}
+                    className="shrink-0 p-2 rounded-full bg-secondary text-primary hover:scale-110 transition-transform disabled:opacity-60"
+                    aria-label={t("admin.translate_recipe")}
+                    title={t("admin.translate_recipe")}
+                  >
+                    <Languages className="w-4 h-4" />
+                  </button>
+                ),
+              })} t={t} />
+          </>
         ) : (
           <div className="space-y-3">
             {community.length === 0 ? (
