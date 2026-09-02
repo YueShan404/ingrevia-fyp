@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import Layout from "@/components/Layout";
 import IngreviaLoader from "@/components/IngreviaLoader";
 import { useToast } from "@/components/ui/use-toast";
-import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload } from "lucide-react";
+import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages } from "lucide-react";
 
 export default function Admin() {
   const { t, lang } = useI18n();
@@ -18,6 +18,7 @@ export default function Admin() {
   const { toast } = useToast();
   const bulkFileRef = useRef(null);
   const [bulkImporting, setBulkImporting] = useState(false);
+  const [translatingRecipeId, setTranslatingRecipeId] = useState(null);
 
   const loadAll = () => {
     Promise.all([
@@ -67,6 +68,48 @@ export default function Admin() {
     if (!confirm(t("admin.confirm_delete"))) return;
     await appApi.entities.Recipe.delete(id);
     loadAll();
+  };
+  const translateRecipe = async (recipe) => {
+    setTranslatingRecipeId(recipe.id);
+    try {
+      const resp = await appApi.functions.invoke("translateRecipeContent", {
+        title: recipe.title,
+        description: recipe.description,
+        ingredients: recipe.ingredients || [],
+        steps: recipe.steps || [],
+        zero_waste_tip: recipe.zero_waste_tip,
+      });
+      const translated = resp?.data || {};
+
+      await appApi.entities.Recipe.update(recipe.id, {
+        title_bm: translated.bm?.title || recipe.title_bm,
+        title_zh: translated.zh?.title || recipe.title_zh,
+        title_ta: translated.ta?.title || recipe.title_ta,
+        description_bm: translated.bm?.description || recipe.description_bm,
+        description_zh: translated.zh?.description || recipe.description_zh,
+        description_ta: translated.ta?.description || recipe.description_ta,
+        ingredients_bm: translated.bm?.ingredients || recipe.ingredients_bm || [],
+        ingredients_zh: translated.zh?.ingredients || recipe.ingredients_zh || [],
+        ingredients_ta: translated.ta?.ingredients || recipe.ingredients_ta || [],
+        steps_bm: translated.bm?.steps || recipe.steps_bm || [],
+        steps_zh: translated.zh?.steps || recipe.steps_zh || [],
+        steps_ta: translated.ta?.steps || recipe.steps_ta || [],
+        zero_waste_tip_bm: translated.bm?.zero_waste_tip || recipe.zero_waste_tip_bm,
+        zero_waste_tip_zh: translated.zh?.zero_waste_tip || recipe.zero_waste_tip_zh,
+        zero_waste_tip_ta: translated.ta?.zero_waste_tip || recipe.zero_waste_tip_ta,
+      });
+
+      toast({ title: t("admin.translate_recipe"), description: t("admin.translate_recipe_success") });
+      loadAll();
+    } catch (err) {
+      toast({
+        title: t("admin.translate_recipe_error"),
+        description: err?.message || "Translation failed",
+        variant: "destructive",
+      });
+    } finally {
+      setTranslatingRecipeId(null);
+    }
   };
   const approveCommunity = async (id) => {
     await appApi.entities.CommunityRecipe.update(id, { status: "approved" });
@@ -158,6 +201,17 @@ export default function Admin() {
               title: localized(item, "title", lang),
               subtitle: t(`kitchen.cuisines.${item.cuisine}`),
               image: item.image_url,
+              action: (
+                <button
+                  onClick={() => translateRecipe(item)}
+                  disabled={translatingRecipeId === item.id}
+                  className="shrink-0 p-2 rounded-full bg-secondary text-primary hover:scale-110 transition-transform disabled:opacity-60"
+                  aria-label={t("admin.translate_recipe")}
+                  title={t("admin.translate_recipe")}
+                >
+                  <Languages className="w-4 h-4" />
+                </button>
+              ),
             })} t={t} />
         ) : (
           <div className="space-y-3">
@@ -212,6 +266,7 @@ function AdminList({ items, onDelete, render, t }) {
             <button onClick={() => onDelete(item.id)} className="shrink-0 p-2 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 hover:scale-110 transition-transform">
               <Trash2 className="w-4 h-4" />
             </button>
+            {r.action}
           </div>
         );
       })}

@@ -130,6 +130,15 @@ create table if not exists public.scan_history (
   user_id uuid references auth.users(id) on delete cascade default auth.uid()
 );
 
+create table if not exists public.recipe_bookmarks (
+  id uuid primary key default gen_random_uuid(),
+  created_date timestamptz not null default now(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  recipe_id uuid not null,
+  recipe_type text not null check (recipe_type in ('recipe', 'community_recipe')),
+  unique (user_id, recipe_id, recipe_type)
+);
+
 create or replace function public.set_updated_date()
 returns trigger as $$
 begin
@@ -226,6 +235,7 @@ alter table public.ingredients enable row level security;
 alter table public.recipes enable row level security;
 alter table public.community_recipes enable row level security;
 alter table public.scan_history enable row level security;
+alter table public.recipe_bookmarks enable row level security;
 alter table public.profiles enable row level security;
 
 grant usage on schema public to anon, authenticated;
@@ -235,6 +245,7 @@ grant select on public.recipes to anon, authenticated;
 grant select on public.community_recipes to anon, authenticated;
 grant insert on public.community_recipes to authenticated;
 grant select, insert, delete on public.scan_history to authenticated;
+grant select, insert, delete on public.recipe_bookmarks to authenticated;
 grant insert, update, delete on public.ingredients to authenticated;
 grant insert, update, delete on public.recipes to authenticated;
 grant update, delete on public.community_recipes to authenticated;
@@ -269,6 +280,9 @@ drop policy if exists "Admins can manage community recipes" on public.community_
 drop policy if exists "Users can read own scan history" on public.scan_history;
 drop policy if exists "Users can create own scan history" on public.scan_history;
 drop policy if exists "Users can delete own scan history" on public.scan_history;
+drop policy if exists "Users can read own recipe bookmarks" on public.recipe_bookmarks;
+drop policy if exists "Users can create own recipe bookmarks" on public.recipe_bookmarks;
+drop policy if exists "Users can delete own recipe bookmarks" on public.recipe_bookmarks;
 
 create policy "Public can read ingredients" on public.ingredients for select using (true);
 create policy "Public can read recipes" on public.recipes for select using (true);
@@ -297,6 +311,13 @@ create policy "Users can read own scan history" on public.scan_history
 create policy "Users can create own scan history" on public.scan_history
   for insert to authenticated with check (user_id = auth.uid() and public.is_active_user());
 create policy "Users can delete own scan history" on public.scan_history
+  for delete to authenticated using (user_id = auth.uid() and public.is_active_user());
+
+create policy "Users can read own recipe bookmarks" on public.recipe_bookmarks
+  for select to authenticated using (user_id = auth.uid() and public.is_active_user());
+create policy "Users can create own recipe bookmarks" on public.recipe_bookmarks
+  for insert to authenticated with check (user_id = auth.uid() and public.is_active_user());
+create policy "Users can delete own recipe bookmarks" on public.recipe_bookmarks
   for delete to authenticated using (user_id = auth.uid() and public.is_active_user());
 
 -- Create a public bucket named "ingrevia-uploads" in Storage.

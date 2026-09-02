@@ -3,10 +3,11 @@ import { useParams, Link } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
 import { useI18n, localized } from "@/lib/i18n";
 import { useFavorites, useZeroWaste } from "@/lib/favorites";
+import { computeRecipeNutritionSummary, computeRecipeSuitability } from "@/lib/recipeHealth";
 import Layout from "@/components/Layout";
 import SpeakButton from "@/components/SpeakButton";
 import IngreviaLoader from "@/components/IngreviaLoader";
-import { ArrowLeft, Clock, ChefHat, Users, Heart, Recycle, Check, Flame } from "lucide-react";
+import { ArrowLeft, Clock, ChefHat, Users, Heart, Recycle, Check, Flame, Activity, AlertTriangle } from "lucide-react";
 
 export default function RecipeDetail() {
   const { id } = useParams();
@@ -14,12 +15,17 @@ export default function RecipeDetail() {
   const { isFavorite, toggleFavorite } = useFavorites();
   const { isApplied, toggleApplied } = useZeroWaste();
   const [recipe, setRecipe] = useState(null);
+  const [allIngredients, setAllIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [servings, setServings] = useState(2);
 
   useEffect(() => {
-    appApi.entities.Recipe.get(id).then((data) => {
+    Promise.all([
+      appApi.entities.Recipe.get(id),
+      appApi.entities.Ingredient.list().catch(() => []),
+    ]).then(([data, ingredientRows]) => {
       setRecipe(data);
+      setAllIngredients(ingredientRows || []);
       setServings(data?.servings || 2);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -37,6 +43,8 @@ export default function RecipeDetail() {
   const applied = isApplied(recipe.id);
   const ratio = servings / (recipe.servings || 2);
   const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0);
+  const nutrition = computeRecipeNutritionSummary(recipe, allIngredients);
+  const suitability = computeRecipeSuitability(recipe, allIngredients);
   const recipeSpeech = [
     title,
     desc,
@@ -114,6 +122,56 @@ export default function RecipeDetail() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="glass-card rounded-3xl border border-border/50 p-5 mb-6">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="font-heading font-bold text-lg">{t("recipe_detail.health_title")}</h2>
+              <p className="text-xs text-muted-foreground">{t("recipe_detail.health_subtitle")}</p>
+            </div>
+            <Activity className="w-6 h-6 text-primary shrink-0" />
+          </div>
+
+          {nutrition ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+              {[
+                ["calories", "kcal"],
+                ["protein", "g"],
+                ["carbs", "g"],
+                ["sugar", "g"],
+                ["fiber", "g"],
+                ["fat", "g"],
+                ["sodium", "mg"],
+              ].map(([field, unit]) => nutrition[field] != null && (
+                <div key={field} className="rounded-2xl bg-secondary/50 border border-border/40 p-3">
+                  <p className="text-[11px] font-semibold text-muted-foreground capitalize">{t(`nutrition.${field}`)}</p>
+                  <p className="font-heading font-extrabold text-lg text-primary">{Math.round(nutrition[field])} {unit}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground mb-4">{t("recipe_detail.nutrition_unavailable")}</p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {suitability.map((item) => (
+              <span
+                key={item.key}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
+                  item.status === "caution"
+                    ? "bg-amber-100 text-amber-800"
+                    : item.status === "good"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-secondary text-foreground/75"
+                }`}
+              >
+                {item.status === "caution" && <AlertTriangle className="w-3.5 h-3.5" />}
+                {t(`recipe_suitable.${item.key}`)}
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">{t("health_advisory.disclaimer")}</p>
         </div>
 
         {/* Servings calculator */}

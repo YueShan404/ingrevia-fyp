@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
 import { useI18n } from "@/lib/i18n";
 import Layout from "@/components/Layout";
-import RecipeCard from "@/components/RecipeCard";
+import RecipeAccordion from "@/components/RecipeAccordion";
 import IngreviaLoader from "@/components/IngreviaLoader";
 import { ChefHat, Clock } from "lucide-react";
 
@@ -75,9 +75,7 @@ export default function LittleKitchen() {
         ) : filtered.length === 0 ? (
           <p className="text-center text-muted-foreground py-20">{t("common.no_results")}</p>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((r) => <RecipeCard key={r.id} recipe={r} ingredients={ingredients} />)}
-          </div>
+          <RecipeAccordion recipes={filtered} ingredients={ingredients} />
         )}
       </div>
     </Layout>

@@ -1,49 +1,113 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/api/supabaseClient";
+import { useAuth } from "@/lib/AuthContext";
 
 const FAV_KEY = "ingrevia_favorites";
 const COMMUNITY_FAV_KEY = "ingrevia_community_favorites";
 const ZW_KEY = "ingrevia_zerowaste_applied";
 
-export function useFavorites() {
+function readLocalFavorites(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || []; }
+  catch { return []; }
+}
+
+function useSyncedFavorites({ localKey, recipeType }) {
+  const { user, isAuthenticated } = useAuth();
   const [favorites, setFavorites] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(FAV_KEY)) || []; }
-    catch { return []; }
+    return readLocalFavorites(localKey);
   });
 
   useEffect(() => {
-    localStorage.setItem(FAV_KEY, JSON.stringify(favorites));
-  }, [favorites]);
+    if (!isAuthenticated) {
+      setFavorites(readLocalFavorites(localKey));
+      return;
+    }
+
+    let cancelled = false;
+
+    const syncFavorites = async () => {
+      const localFavorites = readLocalFavorites(localKey);
+
+      if (localFavorites.length > 0) {
+        await supabase
+          .from("recipe_bookmarks")
+          .upsert(
+            localFavorites.map((recipeId) => ({
+              user_id: user.id,
+              recipe_id: recipeId,
+              recipe_type: recipeType,
+            })),
+            { onConflict: "user_id,recipe_id,recipe_type" }
+          );
+      }
+
+      const { data, error } = await supabase
+        .from("recipe_bookmarks")
+        .select("recipe_id")
+        .eq("user_id", user.id)
+        .eq("recipe_type", recipeType)
+        .order("created_date", { ascending: false });
+
+      if (!cancelled && !error) {
+        const ids = (data || []).map((row) => row.recipe_id);
+        setFavorites(ids);
+        localStorage.setItem(localKey, JSON.stringify(ids));
+      }
+    };
+
+    syncFavorites().catch((error) => {
+      console.warn("Favorite sync failed; using local favorites.", error);
+      if (!cancelled) setFavorites(readLocalFavorites(localKey));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, localKey, recipeType, user?.id]);
 
   const isFavorite = useCallback((id) => favorites.includes(id), [favorites]);
 
-  const toggleFavorite = useCallback((id) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
-    );
-  }, []);
+  const toggleFavorite = useCallback(async (id) => {
+    const wasFavorite = favorites.includes(id);
+    const next = wasFavorite ? favorites.filter((f) => f !== id) : [id, ...favorites];
+
+    setFavorites(next);
+    localStorage.setItem(localKey, JSON.stringify(next));
+
+    if (!isAuthenticated || !user?.id) return;
+
+    try {
+      if (wasFavorite) {
+        await supabase
+          .from("recipe_bookmarks")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("recipe_id", id)
+          .eq("recipe_type", recipeType);
+      } else {
+        await supabase
+          .from("recipe_bookmarks")
+          .upsert(
+            { user_id: user.id, recipe_id: id, recipe_type: recipeType },
+            { onConflict: "user_id,recipe_id,recipe_type" }
+          );
+      }
+    } catch (error) {
+      console.warn("Favorite update failed; reverting local state.", error);
+      setFavorites(favorites);
+      localStorage.setItem(localKey, JSON.stringify(favorites));
+    }
+  }, [favorites, isAuthenticated, localKey, recipeType, user?.id]);
 
   return { favorites, isFavorite, toggleFavorite };
 }
 
+export function useFavorites() {
+  return useSyncedFavorites({ localKey: FAV_KEY, recipeType: "recipe" });
+}
+
 export function useCommunityFavorites() {
-  const [favorites, setFavorites] = useState(() => {
-    try { return JSON.parse(localStorage.getItem(COMMUNITY_FAV_KEY)) || []; }
-    catch { return []; }
-  });
-
-  useEffect(() => {
-    localStorage.setItem(COMMUNITY_FAV_KEY, JSON.stringify(favorites));
-  }, [favorites]);
-
-  const isFavorite = useCallback((id) => favorites.includes(id), [favorites]);
-
-  const toggleFavorite = useCallback((id) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
-    );
-  }, []);
-
-  return { favorites, isFavorite, toggleFavorite };
+  return useSyncedFavorites({ localKey: COMMUNITY_FAV_KEY, recipeType: "community_recipe" });
 }
 
 export function useZeroWaste() {
