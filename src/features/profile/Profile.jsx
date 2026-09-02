@@ -26,7 +26,7 @@ export default function Profile() {
 
   useEffect(() => {
     Promise.all([
-      appApi.entities.ScanHistory.list("-created_date", 5).catch(() => []),
+      appApi.scanHistory.listRecent(30, 5).catch(() => []),
       appApi.entities.Recipe.list().catch(() => []),
     ]).then(([history, recipeRows]) => {
       setScanHistory(history || []);

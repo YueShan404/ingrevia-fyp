@@ -12,7 +12,7 @@ export default function ScanHistoryPage() {
   const [loading, setLoading] = useState(true);
 
   const load = () => {
-    appApi.entities.ScanHistory.list("-created_date", 50).then((data) => {
+    appApi.scanHistory.listRecent(30, 50).then((data) => {
       setHistory(data || []);
       setLoading(false);
     }).catch(() => setLoading(false));

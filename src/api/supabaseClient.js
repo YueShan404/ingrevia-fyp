@@ -92,6 +92,25 @@ export const appApi = {
     ScanHistory: createEntityApi("ScanHistory"),
   },
 
+  scanHistory: {
+    async listRecent(days = 30, limit = 50) {
+      const since = new Date();
+      since.setDate(since.getDate() - days);
+
+      await supabase.rpc("delete_expired_scan_history").catch(() => {});
+
+      const { data, error } = await supabase
+        .from("scan_history")
+        .select("*")
+        .gte("created_date", since.toISOString())
+        .order("created_date", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+      return data || [];
+    },
+  },
+
   auth: {
     async me() {
       const { data: { user }, error } = await supabase.auth.getUser();

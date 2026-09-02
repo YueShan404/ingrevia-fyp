@@ -156,7 +156,7 @@ export default function Layout({ children }) {
               <div className="hidden min-[380px]:block">
                 <AccessibilityPanel open={a11yOpen} setOpen={setA11yOpen} />
               </div>
-              <div className="hidden min-[430px]:block sm:block">
+              <div className="block">
                 <LanguageSwitcher />
               </div>
               <button onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden p-2 rounded-full hover:bg-secondary transition-colors" aria-label="Menu">

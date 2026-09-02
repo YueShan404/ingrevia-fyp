@@ -178,6 +178,17 @@ as $$
   );
 $$;
 
+create or replace function public.delete_expired_scan_history()
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  delete from public.scan_history
+  where user_id = auth.uid()
+    and created_date < now() - interval '30 days';
+$$;
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -245,6 +256,7 @@ grant select on public.recipes to anon, authenticated;
 grant select on public.community_recipes to anon, authenticated;
 grant insert on public.community_recipes to authenticated;
 grant select, insert, delete on public.scan_history to authenticated;
+grant execute on function public.delete_expired_scan_history() to authenticated;
 grant select, insert, delete on public.recipe_bookmarks to authenticated;
 grant insert, update, delete on public.ingredients to authenticated;
 grant insert, update, delete on public.recipes to authenticated;
