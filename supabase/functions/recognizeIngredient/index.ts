@@ -279,14 +279,15 @@ async function detectWithGoogleVision(imageUrl: string): Promise<Detection> {
   };
 }
 
-async function detectIngredientWithFallback(imageUrl: string, ingredients: Ingredient[]): Promise<Detection> {
-  try {
+async function detectIngredientWithProvider(imageUrl: string, ingredients: Ingredient[]): Promise<Detection> {
+  const provider = Deno.env.get("SCANNER_PROVIDER") || "google";
+
+  if (provider === "openai") {
     const detection = await detectIngredient(imageUrl, ingredients);
     return { ...detection, source: "openai_vision" };
-  } catch (openAiError) {
-    console.warn("OpenAI vision unavailable; trying Google Vision fallback.", openAiError);
-    return await detectWithGoogleVision(imageUrl);
   }
+
+  return await detectWithGoogleVision(imageUrl);
 }
 
 Deno.serve(async (req) => {
@@ -318,7 +319,7 @@ Deno.serve(async (req) => {
     assertAllowedImageUrl(image_url);
 
     const ingredients = await loadIngredients(authHeader as string);
-    const detection = await detectIngredientWithFallback(image_url, ingredients);
+    const detection = await detectIngredientWithProvider(image_url, ingredients);
     const ranked = ingredients
       .map((ingredient) => ({
         ingredient,
