@@ -5,7 +5,7 @@ import { useI18n } from "@/lib/i18n";
 import Layout from "@/components/Layout";
 import SeasonalHighlight from "@/components/SeasonalHighlight";
 import RecipeCard from "@/components/RecipeCard";
-import { ScanLine, BookOpen, ChefHat, ShieldCheck, ArrowRight, Sparkles } from "lucide-react";
+import { ScanLine, BookOpen, ChefHat, ShieldCheck, ArrowRight, Sparkles, ExternalLink } from "lucide-react";
 
 export default function Home() {
   const { t } = useI18n();
@@ -120,18 +120,28 @@ export default function Home() {
           <h2 className="font-heading font-bold text-2xl mb-8 text-center">{t("home.sgd_title")}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { num: "2", t: t("home.sgd_2"), d: t("home.sgd_2_d") },
-              { num: "3", t: t("home.sgd_3"), d: t("home.sgd_3_d") },
-              { num: "4", t: t("home.sgd_4"), d: t("home.sgd_4_d") },
-              { num: "12", t: t("home.sgd_12"), d: t("home.sgd_12_d") },
+              { num: "2", t: t("home.sgd_2"), d: t("home.sgd_2_d"), url: "https://sdgs.un.org/goals/goal2" },
+              { num: "3", t: t("home.sgd_3"), d: t("home.sgd_3_d"), url: "https://sdgs.un.org/goals/goal3" },
+              { num: "4", t: t("home.sgd_4"), d: t("home.sgd_4_d"), url: "https://sdgs.un.org/goals/goal4" },
+              { num: "12", t: t("home.sgd_12"), d: t("home.sgd_12_d"), url: "https://sdgs.un.org/goals/goal12" },
             ].map((s) => (
-              <div key={s.num} className="bg-white/10 rounded-2xl p-5 backdrop-blur-sm border border-white/15">
-                <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center font-heading font-extrabold text-xl text-primary-foreground mb-3">
-                  {s.num}
+              <a
+                key={s.num}
+                href={s.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${s.t} - ${t("home.sgd_visit")}`}
+                className="group block bg-white/10 rounded-2xl p-5 backdrop-blur-sm border border-white/15 transition-all hover:-translate-y-1 hover:border-white/35 hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              >
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center font-heading font-extrabold text-xl text-primary-foreground">
+                    {s.num}
+                  </div>
+                  <ExternalLink className="h-4 w-4 text-white/55 transition-colors group-hover:text-white" />
                 </div>
                 <h3 className="font-heading font-bold text-base mb-1.5">{s.t}</h3>
                 <p className="text-sm text-white/70 leading-relaxed">{s.d}</p>
-              </div>
+              </a>
             ))}
           </div>
         </div>
