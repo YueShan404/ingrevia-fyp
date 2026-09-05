@@ -266,7 +266,17 @@ export const appApi = {
   functions: {
     async invoke(name, payload) {
       const { data, error } = await supabase.functions.invoke(name, { body: payload });
-      if (error) throw error;
+      if (error) {
+        try {
+          const details = await error.context?.json?.();
+          if (details?.message) throw new Error(details.message);
+        } catch (detailsError) {
+          if (detailsError instanceof Error && detailsError.message !== "Body is unusable") {
+            throw detailsError;
+          }
+        }
+        throw error;
+      }
       return { data };
     },
   },
