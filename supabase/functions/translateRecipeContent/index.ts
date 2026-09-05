@@ -91,13 +91,17 @@ Deno.serve(async (req) => {
 
     const data = await response.json();
     const rawText = data.output_text || data.output?.[0]?.content?.[0]?.text;
+    if (!rawText) {
+      throw new Error("OpenAI translation returned no readable result.");
+    }
     const translations = JSON.parse(rawText);
 
     return new Response(JSON.stringify(translations), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message || "Translation failed" }), {
+    const message = error instanceof Error ? error.message : "Translation failed";
+    return new Response(JSON.stringify({ error: true, message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

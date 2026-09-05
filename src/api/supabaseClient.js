@@ -269,7 +269,8 @@ export const appApi = {
       if (error) {
         try {
           const details = await error.context?.json?.();
-          if (details?.message) throw new Error(details.message);
+          const message = details?.message || details?.error;
+          if (message) throw new Error(message);
         } catch (detailsError) {
           if (detailsError instanceof Error && detailsError.message !== "Body is unusable") {
             throw detailsError;
