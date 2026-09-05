@@ -8,6 +8,7 @@ const ICONS = { candy: Candy, salt: Droplet, droplet: Droplet, wheat: Wheat, bee
 export default function HealthAdvisory({ nutrition }) {
   const { t } = useI18n();
   const alerts = analyzeAdvisory(nutrition);
+  const source = nutrition?.source || "MyFCD / USDA FoodData Central";
 
   const levelStyles = {
     caution: { bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-200 dark:border-amber-800", icon: "text-amber-500", iconBg: "bg-amber-100 dark:bg-amber-900" },
@@ -34,10 +35,19 @@ export default function HealthAdvisory({ nutrition }) {
             <div className="flex-1">
               <p className="font-semibold text-sm mb-1">{t(`health_advisory.${alert.key}`)}</p>
               <p className="text-sm text-muted-foreground leading-relaxed">{t(`health_advisory.${msgKey}`)}</p>
+              {alert.value != null && (
+                <p className="mt-2 text-xs font-semibold text-foreground/70">
+                  {alert.value}{alert.unit} per 100g · threshold {alert.threshold}{alert.unit}
+                </p>
+              )}
             </div>
           </div>
         );
       })}
+
+      <div className="rounded-xl border border-border/60 bg-background p-3 text-xs text-muted-foreground">
+        {t("health_advisory.source_prefix")}: {source}. {t("health_advisory.source_note")}
+      </div>
 
       {/* Disclaimer */}
       <div className="flex items-start gap-2 p-3 rounded-xl bg-muted/60 border border-border/50">
