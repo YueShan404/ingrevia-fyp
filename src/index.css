@@ -116,21 +116,91 @@
   --foreground: 0 0% 100%;
   --card: 0 0% 0%;
   --card-foreground: 0 0% 100%;
-  --primary: 22 85% 55%;
+  --primary: 42 100% 58%;
   --primary-foreground: 0 0% 0%;
   --secondary: 0 0% 15%;
   --secondary-foreground: 0 0% 100%;
   --muted: 0 0% 10%;
   --muted-foreground: 0 0% 90%;
-  --accent: 126 70% 60%;
+  --accent: 190 100% 64%;
   --accent-foreground: 0 0% 0%;
+  --destructive: 0 100% 72%;
+  --destructive-foreground: 0 0% 0%;
   --border: 0 0% 100%;
   --input: 0 0% 100%;
-  --ring: 22 85% 55%;
+  --ring: 42 100% 58%;
+  --chart-1: 42 100% 58%;
+  --chart-2: 190 100% 64%;
+  --chart-3: 0 100% 72%;
+  --chart-4: 145 100% 65%;
+  --chart-5: 275 100% 78%;
 }
 .contrast-mode * {
   text-shadow: none !important;
   box-shadow: none !important;
+}
+.contrast-mode body,
+.contrast-mode .glass-card,
+.contrast-mode .bg-card,
+.contrast-mode .bg-background {
+  background-color: hsl(0 0% 0%) !important;
+  color: hsl(0 0% 100%) !important;
+}
+.contrast-mode .brand-gradient,
+.contrast-mode .forest-gradient {
+  background: hsl(42 100% 58%) !important;
+  color: hsl(0 0% 0%) !important;
+}
+.contrast-mode .text-gradient {
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+.contrast-mode [class*="bg-red-"],
+.contrast-mode [class*="bg-destructive"] {
+  background-color: hsl(0 100% 18%) !important;
+  border-color: hsl(0 100% 72%) !important;
+}
+.contrast-mode [class*="text-red-"],
+.contrast-mode .text-destructive {
+  color: hsl(0 100% 82%) !important;
+}
+.contrast-mode [class*="bg-amber-"],
+.contrast-mode [class*="bg-yellow-"] {
+  background-color: hsl(42 100% 16%) !important;
+  border-color: hsl(42 100% 58%) !important;
+}
+.contrast-mode [class*="text-amber-"],
+.contrast-mode [class*="text-yellow-"] {
+  color: hsl(42 100% 68%) !important;
+}
+.contrast-mode [class*="bg-emerald-"],
+.contrast-mode [class*="bg-green-"] {
+  background-color: hsl(145 100% 12%) !important;
+  border-color: hsl(145 100% 65%) !important;
+}
+.contrast-mode [class*="text-emerald-"],
+.contrast-mode [class*="text-green-"] {
+  color: hsl(145 100% 75%) !important;
+}
+.contrast-mode [class*="bg-sky-"],
+.contrast-mode [class*="bg-blue-"] {
+  background-color: hsl(190 100% 12%) !important;
+  border-color: hsl(190 100% 64%) !important;
+}
+.contrast-mode [class*="text-sky-"],
+.contrast-mode [class*="text-blue-"] {
+  color: hsl(190 100% 74%) !important;
+}
+.contrast-mode button,
+.contrast-mode a,
+.contrast-mode input,
+.contrast-mode textarea,
+.contrast-mode select {
+  outline-offset: 3px;
+}
+.contrast-mode :focus-visible {
+  outline: 3px solid hsl(42 100% 58%) !important;
+  outline-offset: 3px;
 }
 .contrast-mode img {
   filter: contrast(1.3);

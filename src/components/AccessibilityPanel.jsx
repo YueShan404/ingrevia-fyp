@@ -58,7 +58,7 @@ export default function AccessibilityPanel({ open, setOpen }) {
                 </button>
               </div>
               {/* High contrast */}
-              <ToggleRow icon={Contrast} label={t("accessibility.contrast")}
+              <ToggleRow icon={Contrast} label={t("accessibility.contrast")} desc={t("accessibility.contrast_hint")}
                 on={highContrast} onToggle={() => setHighContrast(!highContrast)} onLabel={t("accessibility.contrast_on")} offLabel={t("accessibility.contrast_off")} />
               {/* Large font */}
               <ToggleRow icon={Type} label={t("accessibility.large_font")}
