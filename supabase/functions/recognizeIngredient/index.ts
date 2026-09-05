@@ -26,6 +26,7 @@ type Detection = {
   category: string;
   confidence: number;
   description: string;
+  source?: string;
 };
 
 const normalize = (value = "") =>
@@ -228,6 +229,66 @@ async function detectIngredient(imageUrl: string, ingredients: Ingredient[]): Pr
   return JSON.parse(text);
 }
 
+async function detectWithGoogleVision(imageUrl: string): Promise<Detection> {
+  const apiKey = Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY");
+
+  if (!apiKey) {
+    throw new Error(
+      "No scanner provider is available. Add OpenAI API credits or set GOOGLE_CLOUD_VISION_API_KEY in Supabase secrets.",
+    );
+  }
+
+  const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      requests: [
+        {
+          image: { source: { imageUri: imageUrl } },
+          features: [{ type: "LABEL_DETECTION", maxResults: 10 }],
+        },
+      ],
+    }),
+  });
+
+  const payload = await response.json();
+  const googleError = payload.responses?.[0]?.error || payload.error;
+
+  if (!response.ok || googleError) {
+    const message = googleError?.message || response.statusText || "Unknown Google Vision error.";
+    throw new Error(`Google Vision recognition failed (${response.status}): ${message}`);
+  }
+
+  const labels = payload.responses?.[0]?.labelAnnotations || [];
+  const best = labels[0];
+
+  if (!best?.description) {
+    throw new Error("Google Vision returned no readable labels for this image.");
+  }
+
+  return {
+    ingredient_name: best.description,
+    common_names: labels
+      .slice(1, 8)
+      .map((label: { description?: string }) => label.description)
+      .filter(Boolean),
+    category: "food",
+    confidence: Math.max(0, Math.min(100, Math.round((best.score || 0) * 100))),
+    description: "Detected using Google Vision label detection because OpenAI vision is unavailable.",
+    source: "google_vision",
+  };
+}
+
+async function detectIngredientWithFallback(imageUrl: string, ingredients: Ingredient[]): Promise<Detection> {
+  try {
+    const detection = await detectIngredient(imageUrl, ingredients);
+    return { ...detection, source: "openai_vision" };
+  } catch (openAiError) {
+    console.warn("OpenAI vision unavailable; trying Google Vision fallback.", openAiError);
+    return await detectWithGoogleVision(imageUrl);
+  }
+}
+
 Deno.serve(async (req) => {
   const origin = req.headers.get("Origin");
   const corsHeaders = getCorsHeaders(origin);
@@ -257,7 +318,7 @@ Deno.serve(async (req) => {
     assertAllowedImageUrl(image_url);
 
     const ingredients = await loadIngredients(authHeader as string);
-    const detection = await detectIngredient(image_url, ingredients);
+    const detection = await detectIngredientWithFallback(image_url, ingredients);
     const ranked = ingredients
       .map((ingredient) => ({
         ingredient,
@@ -282,7 +343,7 @@ Deno.serve(async (req) => {
         matched_ingredient: matchedIngredient,
         matched: Boolean(matchedIngredient),
         suggestions: ranked.slice(0, 5).map((item) => item.ingredient),
-        source: "openai_vision",
+        source: detection.source || "openai_vision",
       },
       200,
       corsHeaders,
