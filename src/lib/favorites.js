@@ -11,6 +11,14 @@ function readLocalFavorites(key) {
   catch { return []; }
 }
 
+async function createBookmark({ userId, recipeId, recipeType }) {
+  const { error } = await supabase
+    .from("recipe_bookmarks")
+    .insert({ user_id: userId, recipe_id: recipeId, recipe_type: recipeType });
+
+  if (error && error.code !== "23505") throw error;
+}
+
 function useSyncedFavorites({ localKey, recipeType }) {
   const { user, isAuthenticated } = useAuth();
   const [favorites, setFavorites] = useState(() => {
@@ -29,16 +37,11 @@ function useSyncedFavorites({ localKey, recipeType }) {
       const localFavorites = readLocalFavorites(localKey);
 
       if (localFavorites.length > 0) {
-        await supabase
-          .from("recipe_bookmarks")
-          .upsert(
-            localFavorites.map((recipeId) => ({
-              user_id: user.id,
-              recipe_id: recipeId,
-              recipe_type: recipeType,
-            })),
-            { onConflict: "user_id,recipe_id,recipe_type" }
-          );
+        await Promise.all(
+          localFavorites.map((recipeId) =>
+            createBookmark({ userId: user.id, recipeId, recipeType })
+          )
+        );
       }
 
       const { data, error } = await supabase
@@ -85,12 +88,7 @@ function useSyncedFavorites({ localKey, recipeType }) {
           .eq("recipe_id", id)
           .eq("recipe_type", recipeType);
       } else {
-        await supabase
-          .from("recipe_bookmarks")
-          .upsert(
-            { user_id: user.id, recipe_id: id, recipe_type: recipeType },
-            { onConflict: "user_id,recipe_id,recipe_type" }
-          );
+        await createBookmark({ userId: user.id, recipeId: id, recipeType });
       }
     } catch (error) {
       console.warn("Favorite update failed; reverting local state.", error);

@@ -191,7 +191,7 @@ export default function Scanner() {
       // Save to scan history for the current user.
       const canSaveHistory = file_url && !file_url.startsWith("data:");
       const historyName = scanResult.matchedIngredient?.name || llmResult.ingredient_name;
-      if (historyName && canSaveHistory) {
+      if (historyName && canSaveHistory && user?.id) {
         try {
           await appApi.entities.ScanHistory.create({
             ingredient_name: historyName,

@@ -84,6 +84,20 @@ const createAuthError = (type, message, details = {}) => {
   return error;
 };
 
+const getProfileCooldown = (profileUpdatedAt) => {
+  if (!profileUpdatedAt) return { locked: false, nextChangeDate: null };
+  const nextChangeDate = new Date(profileUpdatedAt);
+  nextChangeDate.setDate(nextChangeDate.getDate() + 7);
+  return { locked: nextChangeDate > new Date(), nextChangeDate };
+};
+
+const getCurrentUser = async () => {
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) throw error;
+  if (!user) throw new Error("Authentication required");
+  return user;
+};
+
 export const appApi = {
   entities: {
     Ingredient: createEntityApi("Ingredient"),
@@ -121,7 +135,7 @@ export const appApi = {
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("role,status,full_name,email")
+        .select("role,status,full_name,email,avatar_url,public_user_id,profile_updated_at")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -149,6 +163,9 @@ export const appApi = {
         email: user.email,
         status: profile.status,
         full_name: profile.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email,
+        avatar_url: profile.avatar_url,
+        public_user_id: profile.public_user_id,
+        profile_updated_at: profile.profile_updated_at,
         ...user.user_metadata,
         role,
       };
@@ -230,8 +247,10 @@ export const appApi = {
   integrations: {
     Core: {
       async UploadFile({ file }) {
+        const user = await getCurrentUser();
         const extension = file.name.split(".").pop();
-        const path = `${crypto.randomUUID()}.${extension}`;
+        const safeExtension = extension ? extension.toLowerCase().replace(/[^a-z0-9]/g, "") : "jpg";
+        const path = `${user.id}/${crypto.randomUUID()}.${safeExtension}`;
         const { error } = await supabase.storage.from(storageBucket).upload(path, file, {
           cacheControl: "3600",
           upsert: false,
@@ -249,6 +268,124 @@ export const appApi = {
       const { data, error } = await supabase.functions.invoke(name, { body: payload });
       if (error) throw error;
       return { data };
+    },
+  },
+
+  profiles: {
+    getCooldown(profile) {
+      return getProfileCooldown(profile?.profile_updated_at);
+    },
+
+    async updateOwnProfile({ full_name, avatar_url }) {
+      const user = await getCurrentUser();
+
+      const { data: current, error: currentError } = await supabase
+        .from("profiles")
+        .select("profile_updated_at")
+        .eq("id", user.id)
+        .single();
+      if (currentError) throw currentError;
+
+      const cooldown = getProfileCooldown(current?.profile_updated_at);
+      if (cooldown.locked) {
+        throw new Error(`Profile can only be changed every 7 days. Next change: ${cooldown.nextChangeDate.toLocaleDateString()}`);
+      }
+
+      const values = {
+        full_name: String(full_name || "").trim(),
+        avatar_url: avatar_url || null,
+        profile_updated_at: new Date().toISOString(),
+      };
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .update(values)
+        .eq("id", user.id)
+        .select("id,email,full_name,role,status,avatar_url,public_user_id,profile_updated_at")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async getPublicByUserId(userId) {
+      if (!userId) return null;
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id,full_name,avatar_url,public_user_id,created_date")
+        .eq("id", userId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+
+    async getPublicByPublicId(publicUserId) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id,full_name,avatar_url,public_user_id,created_date")
+        .eq("public_user_id", publicUserId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  },
+
+  social: {
+    async isFollowing(followingId) {
+      const { data, error } = await supabase
+        .from("user_follows")
+        .select("following_id")
+        .eq("following_id", followingId)
+        .maybeSingle();
+      if (error) throw error;
+      return Boolean(data);
+    },
+
+    async follow(followingId) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error("Authentication required");
+      const { error } = await supabase.from("user_follows").insert({ follower_id: user.id, following_id: followingId });
+      if (error) throw error;
+      return true;
+    },
+
+    async unfollow(followingId) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) throw userError;
+      if (!user) throw new Error("Authentication required");
+      const { error } = await supabase.from("user_follows").delete().eq("follower_id", user.id).eq("following_id", followingId);
+      if (error) throw error;
+      return true;
+    },
+
+    async listFollowers(userId) {
+      const { data, error } = await supabase.from("user_follows").select("follower_id").eq("following_id", userId);
+      if (error) throw error;
+      return (data || []).map((row) => row.follower_id);
+    },
+
+    async notifyFollowers({ followerIds, actorUserId, recipeId, recipeTitle }) {
+      const rows = [...new Set(followerIds || [])].map((userId) => ({
+        user_id: userId,
+        actor_user_id: actorUserId,
+        recipe_id: recipeId,
+        type: "new_recipe",
+        message: `New recipe shared: ${recipeTitle}`,
+      }));
+      if (!rows.length) return [];
+      const { data, error } = await supabase.from("notifications").insert(rows).select("*");
+      if (error) throw error;
+      return data || [];
+    },
+
+    async listNotifications(limit = 20) {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .order("created_date", { ascending: false })
+        .limit(limit);
+      if (error) throw error;
+      return data || [];
     },
   },
 };
