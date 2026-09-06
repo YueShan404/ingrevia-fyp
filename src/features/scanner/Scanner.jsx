@@ -24,8 +24,6 @@ const getIngredientTerms = (ingredient) =>
     ingredient.name_bm,
     ingredient.name_zh,
     ingredient.name_ta,
-    ingredient.category,
-    ingredient.description,
   ]
     .filter(Boolean)
     .map(normalizeText);
@@ -189,14 +187,13 @@ export default function Scanner() {
       setResult(scanResult);
 
       // Save to scan history for the current user.
-      const canSaveHistory = file_url && !file_url.startsWith("data:");
       const historyName = scanResult.matchedIngredient?.name || llmResult.ingredient_name || "Unmatched ingredient";
-      if (canSaveHistory && user?.id) {
+      if (user?.id) {
         try {
           await appApi.entities.ScanHistory.create({
             ingredient_name: historyName,
             ingredient_id: scanResult.matchedIngredient?.id || null,
-            image_url: file_url,
+            image_url: file_url && !file_url.startsWith("data:") ? file_url : null,
             confidence,
             matched: Boolean(scanResult.matchedIngredient),
             user_id: user?.id,

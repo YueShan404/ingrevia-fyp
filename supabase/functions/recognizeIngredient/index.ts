@@ -44,23 +44,50 @@ const ingredientTerms = (ingredient: Ingredient) =>
     ingredient.name_bm,
     ingredient.name_zh,
     ingredient.name_ta,
-    ingredient.category,
-    ingredient.description,
   ]
     .filter(Boolean)
     .map((term) => normalize(String(term)));
 
+const BROAD_LABELS = new Set([
+  "food",
+  "ingredient",
+  "vegetable",
+  "leaf vegetable",
+  "terrestrial plant",
+  "plant",
+  "produce",
+  "natural foods",
+  "whole food",
+  "herb",
+  "greens",
+  "leaf",
+]);
+
+const EXTRA_ALIASES: Record<string, string[]> = {
+  kangkung: ["water spinach", "morning glory", "chinese water spinach", "swamp cabbage", "ong choy", "kangkong"],
+  cabbage: ["cabbage", "round cabbage", "green cabbage"],
+  "chinese cabbage": ["chinese cabbage", "napa cabbage", "wong bok"],
+  "bok choy": ["bok choy", "pak choy", "bok choy sum", "choy sum"],
+};
+
+const allIngredientTerms = (ingredient: Ingredient) => {
+  const baseTerms = ingredientTerms(ingredient);
+  const aliases = baseTerms.flatMap((term) => EXTRA_ALIASES[term] || []);
+  return [...new Set([...baseTerms, ...aliases.map(normalize)])];
+};
+
 const scoreMatch = (ingredient: Ingredient, detection: Detection) => {
   const queries = [
     detection.ingredient_name,
-    detection.category,
     ...(detection.common_names || []),
   ]
     .filter(Boolean)
     .map((term) => normalize(String(term)));
 
   return queries.reduce((bestScore, query) => {
-    const score = ingredientTerms(ingredient).reduce((termBest, term) => {
+    if (!query || BROAD_LABELS.has(query)) return bestScore;
+
+    const score = allIngredientTerms(ingredient).reduce((termBest, term) => {
       if (!query || !term) return termBest;
       if (query === term) return Math.max(termBest, 98);
       if (query.includes(term) || term.includes(query)) return Math.max(termBest, 86);
@@ -68,7 +95,8 @@ const scoreMatch = (ingredient: Ingredient, detection: Detection) => {
       const queryWords = query.split(" ").filter((word) => word.length > 2);
       const termWords = term.split(" ").filter((word) => word.length > 2);
       const overlap = queryWords.filter((word) => termWords.includes(word)).length;
-      return overlap > 0 ? Math.max(termBest, Math.min(78, 44 + overlap * 12)) : termBest;
+      const hasSpecificOverlap = overlap > 0 && !queryWords.every((word) => BROAD_LABELS.has(word));
+      return hasSpecificOverlap ? Math.max(termBest, Math.min(70, 36 + overlap * 10)) : termBest;
     }, 0);
     return Math.max(bestScore, score);
   }, 0);
@@ -229,7 +257,9 @@ Deno.serve(async (req) => {
       .sort((a, b) => b.score - a.score);
 
     const best = ranked[0];
-    const matchedIngredient = best?.score >= 72 ? best.ingredient : null;
+    const second = ranked[1];
+    const isClearMatch = Boolean(best && best.score >= 86 && (!second || best.score - second.score >= 8));
+    const matchedIngredient = isClearMatch ? best.ingredient : null;
     const confidence = Math.max(0, Math.min(100, Math.round(detection.confidence || 0)));
 
     return json(
