@@ -142,100 +142,11 @@ async function loadIngredients(authHeader: string): Promise<Ingredient[]> {
   return await response.json();
 }
 
-async function detectIngredient(imageUrl: string, ingredients: Ingredient[]): Promise<Detection> {
-  const apiKey = Deno.env.get("OPENAI_API_KEY");
-  const model = Deno.env.get("OPENAI_VISION_MODEL") || "gpt-4o-mini";
-
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not set for the recognizeIngredient Supabase function.");
-  }
-
-  const knownIngredients = ingredients
-    .slice(0, 160)
-    .map((ingredient) => ingredient.name)
-    .filter(Boolean)
-    .join(", ");
-
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      input: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text:
-                "Identify the main edible ingredient in this image for a Malaysian food-learning app. " +
-                "If the ingredient is visible but not in the known catalogue, still name it. " +
-                "Prefer the most specific common ingredient name. Return only the requested JSON fields. " +
-                "Use confidence 0-100. Known catalogue examples: " +
-                knownIngredients,
-            },
-            {
-              type: "input_image",
-              image_url: imageUrl,
-              detail: "high",
-            },
-          ],
-        },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "ingredient_detection",
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            properties: {
-              ingredient_name: { type: "string" },
-              common_names: {
-                type: "array",
-                items: { type: "string" },
-              },
-              category: { type: "string" },
-              confidence: { type: "number" },
-              description: { type: "string" },
-            },
-            required: ["ingredient_name", "common_names", "category", "confidence", "description"],
-          },
-        },
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text();
-    throw new Error(`OpenAI vision recognition failed (${response.status}): ${detail}`);
-  }
-
-  const payload = await response.json();
-  const text =
-    payload.output_text ||
-    payload.output
-      ?.flatMap((item: { content?: Array<{ text?: string }> }) => item.content || [])
-      ?.find((item: { text?: string }) => item.text)
-      ?.text;
-
-  if (!text) {
-    throw new Error("OpenAI vision recognition returned no readable result.");
-  }
-
-  return JSON.parse(text);
-}
-
 async function detectWithGoogleVision(imageUrl: string): Promise<Detection> {
   const apiKey = Deno.env.get("GOOGLE_CLOUD_VISION_API_KEY");
 
   if (!apiKey) {
-    throw new Error(
-      "No scanner provider is available. Add OpenAI API credits or set GOOGLE_CLOUD_VISION_API_KEY in Supabase secrets.",
-    );
+    throw new Error("GOOGLE_CLOUD_VISION_API_KEY is not set in Supabase secrets.");
   }
 
   const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
@@ -274,20 +185,9 @@ async function detectWithGoogleVision(imageUrl: string): Promise<Detection> {
       .filter(Boolean),
     category: "food",
     confidence: Math.max(0, Math.min(100, Math.round((best.score || 0) * 100))),
-    description: "Detected using Google Vision label detection because OpenAI vision is unavailable.",
+    description: "Detected using Google Vision label detection and matched against the Ingrevia ingredient catalogue.",
     source: "google_vision",
   };
-}
-
-async function detectIngredientWithProvider(imageUrl: string, ingredients: Ingredient[]): Promise<Detection> {
-  const provider = Deno.env.get("SCANNER_PROVIDER") || "google";
-
-  if (provider === "openai") {
-    const detection = await detectIngredient(imageUrl, ingredients);
-    return { ...detection, source: "openai_vision" };
-  }
-
-  return await detectWithGoogleVision(imageUrl);
 }
 
 Deno.serve(async (req) => {
@@ -319,7 +219,7 @@ Deno.serve(async (req) => {
     assertAllowedImageUrl(image_url);
 
     const ingredients = await loadIngredients(authHeader as string);
-    const detection = await detectIngredientWithProvider(image_url, ingredients);
+    const detection = await detectWithGoogleVision(image_url);
     const ranked = ingredients
       .map((ingredient) => ({
         ingredient,
@@ -340,11 +240,11 @@ Deno.serve(async (req) => {
         confidence,
         description: matchedIngredient
           ? detection.description
-          : `${detection.description} This ingredient was detected by AI but is not currently in the Ingrevia catalogue.`,
+          : `${detection.description} This ingredient was detected but is not currently in the Ingrevia catalogue.`,
         matched_ingredient: matchedIngredient,
         matched: Boolean(matchedIngredient),
         suggestions: ranked.slice(0, 5).map((item) => item.ingredient),
-        source: detection.source || "openai_vision",
+        source: "google_vision",
       },
       200,
       corsHeaders,
