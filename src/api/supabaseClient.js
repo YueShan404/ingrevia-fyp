@@ -84,7 +84,8 @@ const createAuthError = (type, message, details = {}) => {
   return error;
 };
 
-const getProfileCooldown = (profileUpdatedAt) => {
+const getProfileCooldown = (profileUpdatedAt, role) => {
+  if (role === "admin") return { locked: false, nextChangeDate: null };
   if (!profileUpdatedAt) return { locked: false, nextChangeDate: null };
   const nextChangeDate = new Date(profileUpdatedAt);
   nextChangeDate.setDate(nextChangeDate.getDate() + 7);
@@ -352,7 +353,7 @@ export const appApi = {
 
   profiles: {
     getCooldown(profile) {
-      return getProfileCooldown(profile?.profile_updated_at);
+      return getProfileCooldown(profile?.profile_updated_at, profile?.role);
     },
 
     async updateOwnProfile({ full_name, avatar_url }) {
@@ -360,12 +361,12 @@ export const appApi = {
 
       const { data: current, error: currentError } = await supabase
         .from("profiles")
-        .select("profile_updated_at")
+        .select("profile_updated_at,role")
         .eq("id", user.id)
         .single();
       if (currentError) throw currentError;
 
-      const cooldown = getProfileCooldown(current?.profile_updated_at);
+      const cooldown = getProfileCooldown(current?.profile_updated_at, current?.role);
       if (cooldown.locked) {
         throw new Error(`Profile can only be changed every 7 days. Next change: ${cooldown.nextChangeDate.toLocaleDateString()}`);
       }

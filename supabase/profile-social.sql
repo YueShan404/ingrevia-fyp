@@ -90,7 +90,11 @@ create policy "Users can update own profile" on public.profiles
   for update to authenticated using (
     id = auth.uid()
     and public.is_active_user()
-    and (profile_updated_at is null or profile_updated_at <= now() - interval '7 days')
+    and (
+      public.is_admin()
+      or profile_updated_at is null
+      or profile_updated_at <= now() - interval '7 days'
+    )
   ) with check (id = auth.uid() and public.is_active_user());
 
 create policy "Authenticated users can read follows" on public.user_follows
