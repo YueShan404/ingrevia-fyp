@@ -26,32 +26,32 @@ export function analyzeAdvisory(nutrition) {
 
   // Higher-risk characteristics first (educational, not medical)
   if (n.sugar >= ADVISORY_THRESHOLDS.high_sugar) {
-    alerts.push({ key: "high_sugar", level: "caution", icon: "candy" });
+    alerts.push({ key: "high_sugar", level: "caution", icon: "candy", field: "sugar", value: n.sugar, unit: "g", threshold: ADVISORY_THRESHOLDS.high_sugar });
   }
   if (n.sodium >= ADVISORY_THRESHOLDS.high_sodium) {
-    alerts.push({ key: "high_sodium", level: "caution", icon: "salt" });
+    alerts.push({ key: "high_sodium", level: "caution", icon: "salt", field: "sodium", value: n.sodium, unit: "mg", threshold: ADVISORY_THRESHOLDS.high_sodium });
   }
   if (n.saturated_fat >= ADVISORY_THRESHOLDS.high_satfat) {
-    alerts.push({ key: "high_satfat", level: "caution", icon: "droplet" });
+    alerts.push({ key: "high_satfat", level: "caution", icon: "droplet", field: "saturated_fat", value: n.saturated_fat, unit: "g", threshold: ADVISORY_THRESHOLDS.high_satfat });
   }
 
   // Positive characteristics
   if (n.fiber >= ADVISORY_THRESHOLDS.good_fiber) {
-    alerts.push({ key: "good_fiber", level: "positive", icon: "wheat" });
+    alerts.push({ key: "good_fiber", level: "positive", icon: "wheat", field: "fiber", value: n.fiber, unit: "g", threshold: ADVISORY_THRESHOLDS.good_fiber });
   }
   if (n.protein >= ADVISORY_THRESHOLDS.good_protein) {
-    alerts.push({ key: "good_protein", level: "positive", icon: "beef" });
+    alerts.push({ key: "good_protein", level: "positive", icon: "beef", field: "protein", value: n.protein, unit: "g", threshold: ADVISORY_THRESHOLDS.good_protein });
   }
 
   // Lower characteristics (informational)
   if (n.sugar > 0 && n.sugar <= ADVISORY_THRESHOLDS.low_sugar) {
-    alerts.push({ key: "low_sugar", level: "info", icon: "leaf" });
+    alerts.push({ key: "low_sugar", level: "info", icon: "leaf", field: "sugar", value: n.sugar, unit: "g", threshold: ADVISORY_THRESHOLDS.low_sugar });
   }
   if (n.sodium > 0 && n.sodium <= ADVISORY_THRESHOLDS.low_sodium) {
-    alerts.push({ key: "low_sodium", level: "info", icon: "leaf" });
+    alerts.push({ key: "low_sodium", level: "info", icon: "leaf", field: "sodium", value: n.sodium, unit: "mg", threshold: ADVISORY_THRESHOLDS.low_sodium });
   }
   if (n.saturated_fat > 0 && n.saturated_fat <= ADVISORY_THRESHOLDS.low_satfat) {
-    alerts.push({ key: "low_satfat", level: "info", icon: "leaf" });
+    alerts.push({ key: "low_satfat", level: "info", icon: "leaf", field: "saturated_fat", value: n.saturated_fat, unit: "g", threshold: ADVISORY_THRESHOLDS.low_satfat });
   }
 
   if (alerts.length === 0) {

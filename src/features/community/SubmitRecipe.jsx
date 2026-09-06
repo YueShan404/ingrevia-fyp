@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/lib/AuthContext";
 import Layout from "@/components/Layout";
 import FlipCard from "@/components/FlipCard";
 import { PenSquare, Upload, Loader2, CheckCircle2, ArrowLeft, Sparkles, Heart } from "lucide-react";
@@ -13,6 +14,7 @@ const TAG_OPTIONS = ["herb", "vegetable", "fruit", "spice", "seafood", "grain", 
 
 export default function SubmitRecipe() {
   const { t } = useI18n();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     title: "", author: "", cuisine: "malay", description: "",
@@ -103,9 +105,10 @@ export default function SubmitRecipe() {
         console.warn("Recipe auto-translation failed; saving original recipe only.", translationError);
       }
 
-      await appApi.entities.CommunityRecipe.create({
+      const createdRecipe = await appApi.entities.CommunityRecipe.create({
         title: form.title,
-        author: form.author,
+        author: form.author || user?.full_name || user?.email || "Ingrevia member",
+        user_id: user?.id,
         cuisine: form.cuisine,
         image_url: images[0]?.url,
         image_urls: images.map((image) => image.url),
@@ -121,6 +124,20 @@ export default function SubmitRecipe() {
         status: "pending",
         ...autoTranslations,
       });
+
+      if (user?.id) {
+        try {
+          const followerIds = await appApi.social.listFollowers(user.id);
+          await appApi.social.notifyFollowers({
+            followerIds,
+            actorUserId: user.id,
+            recipeId: createdRecipe.id,
+            recipeTitle: form.title,
+          });
+        } catch (notifyError) {
+          console.warn("Recipe saved, but follower notifications could not be created.", notifyError);
+        }
+      }
       setSubmitted(true);
     } catch (err) {
       alert("Error: " + (err.message || "Failed to submit"));
@@ -213,7 +230,7 @@ export default function SubmitRecipe() {
                 className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[hsl(18,71%,42%)]" />
             </Field>
             <Field label={t("submit.author")} required>
-              <input type="text" required value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })}
+              <input type="text" required value={form.author || user?.full_name || ""} onChange={(e) => setForm({ ...form, author: e.target.value })}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[hsl(18,71%,42%)]" />
             </Field>
           </div>

@@ -5,7 +5,7 @@ export function LogoIcon({ size = 40, className = "", rounded = true }) {
   return (
     <span
       style={{ width: size, height: size, borderRadius: r }}
-      className={`inline-flex items-center justify-center shrink-0 overflow-hidden ${className}`}
+      className={`inline-flex items-center justify-center shrink-0 overflow-hidden bg-white p-1 shadow-sm ring-1 ring-black/5 ${className}`}
       aria-label="Ingrevia logo"
       role="img"
     >
