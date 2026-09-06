@@ -75,6 +75,7 @@ export default function Profile() {
     .join("") || "I";
   const savedCount = recipes.filter((recipe) => favorites.includes(recipe.id)).length;
   const roleLabel = user?.role === "admin" ? "Admin" : "User";
+  const isAdmin = user?.role === "admin";
   const remaining = formatCooldownRemaining(cooldown.nextChangeDate, now);
   const profileUrl = user?.public_user_id ? `${window.location.origin}/u/${user.public_user_id}` : "";
 
@@ -97,7 +98,7 @@ export default function Profile() {
       await appApi.profiles.updateOwnProfile({ full_name: name, avatar_url: avatarUrl });
       await checkUserAuth();
       setEditOpen(false);
-      alert("Profile updated. You can change it again after 7 days.");
+      alert(isAdmin ? "Profile updated. Admin can edit again anytime." : "Profile updated. You can change it again after 7 days.");
     } catch (err) {
       alert(err.message || "Profile update failed.");
     } finally {
@@ -145,7 +146,7 @@ export default function Profile() {
             <div>
               <h2 className="font-heading text-xl font-bold">Public Profile</h2>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Change your profile picture and name once every 7 days.
+                {isAdmin ? "Admin can update profile details anytime." : "Change your profile picture and name once every 7 days."}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -182,7 +183,9 @@ export default function Profile() {
               <p className={`mt-2 text-sm font-medium ${cooldown.locked ? "text-amber-700" : "text-emerald-700"}`}>
                 {cooldown.locked
                   ? `You can edit again in ${remaining}.`
-                  : "Profile changes are available now."}
+                  : isAdmin
+                    ? "Admin profile changes are available anytime."
+                    : "Profile changes are available now."}
               </p>
             </div>
           </div>
@@ -194,7 +197,9 @@ export default function Profile() {
                 <DialogDescription>
                   {cooldown.locked
                     ? `Next profile change available in ${remaining}.`
-                    : "Update your display name or profile picture."}
+                    : isAdmin
+                      ? "Update your admin display name or profile picture anytime."
+                      : "Update your display name or profile picture."}
                 </DialogDescription>
               </DialogHeader>
               {cooldown.locked && (
