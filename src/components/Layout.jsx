@@ -59,7 +59,7 @@ export default function Layout({ children }) {
       <header className="sticky top-0 z-50 w-full max-w-full bg-white/92 backdrop-blur-xl border-b border-border/60 shadow-sm">
         <div className="w-full max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center justify-between min-h-16 sm:min-h-20 gap-2 sm:gap-4">
-            <Link to="/" className="flex min-w-0 items-center shrink group">
+            <Link to="/" className="flex min-w-fit shrink-0 items-center group">
               <Logo size={32} showTagline lang={lang} className="hidden sm:inline-flex" />
               <Logo size={34} showWordmark={false} lang={lang} className="sm:hidden" />
             </Link>

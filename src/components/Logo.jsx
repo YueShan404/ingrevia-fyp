@@ -22,10 +22,10 @@ const TAGLINES = {
 };
 
 export default function Logo({ size = 36, showWordmark = true, showTagline = false, lang = "en", className = "" }) {
-  return (
-    <span className={`inline-flex min-w-0 max-w-full items-center gap-2.5 leading-normal ${className}`}>
-      <LogoIcon size={size} />
-      {showWordmark && (
+  if (showWordmark) {
+    return (
+      <span className={`inline-flex min-w-0 max-w-full items-center gap-2.5 leading-normal ${className}`}>
+        <LogoIcon size={size} />
         <span className="min-w-0 overflow-visible py-0.5">
           <span
             className="block truncate font-display font-extrabold leading-[1.12]"
@@ -42,7 +42,13 @@ export default function Logo({ size = 36, showWordmark = true, showTagline = fal
             </span>
           )}
         </span>
-      )}
+      </span>
+    );
+  }
+
+  return (
+    <span className={`inline-flex shrink-0 leading-none ${className}`}>
+      <LogoIcon size={size} />
     </span>
   );
 }
