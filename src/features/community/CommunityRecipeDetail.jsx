@@ -3,28 +3,45 @@ import { useParams, Link } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
 import { useI18n, localized } from "@/lib/i18n";
 import { useCommunityFavorites } from "@/lib/favorites";
+import { useAuth } from "@/lib/AuthContext";
 import Layout from "@/components/Layout";
 import SpeakButton from "@/components/SpeakButton";
 import IngreviaLoader from "@/components/IngreviaLoader";
 import { Image } from "@/components/ui/image";
-import { ArrowLeft, Clock, Bookmark, Recycle, ChefHat, Sparkles } from "lucide-react";
+import { ArrowLeft, Clock, Bookmark, Recycle, ChefHat, Sparkles, UserPlus, UserCheck, Heart, MessageCircle, Send, Trash2 } from "lucide-react";
 
 export default function CommunityRecipeDetail() {
   const { id } = useParams();
   const { t, lang } = useI18n();
+  const { user, isAuthenticated } = useAuth();
   const { isFavorite, toggleFavorite } = useCommunityFavorites();
   const [recipe, setRecipe] = useState(null);
+  const [authorProfile, setAuthorProfile] = useState(null);
+  const [following, setFollowing] = useState(false);
+  const [engagement, setEngagement] = useState({ likeCount: 0, liked: false, comments: [] });
+  const [commentText, setCommentText] = useState("");
+  const [commenting, setCommenting] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const loadEngagement = React.useCallback(() => {
+    if (!id || !isAuthenticated) return;
+    appApi.social.getRecipeEngagement(id).then(setEngagement).catch(() => {});
+  }, [id, isAuthenticated]);
 
   useEffect(() => {
     appApi.entities.CommunityRecipe
       .get(id)
       .then((data) => {
         setRecipe(data);
+        if (data?.user_id) {
+          appApi.profiles.getPublicByUserId(data.user_id).then(setAuthorProfile).catch(() => {});
+          appApi.social.isFollowing(data.user_id).then(setFollowing).catch(() => {});
+        }
+        loadEngagement();
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [id]);
+  }, [id, loadEngagement]);
 
   if (loading)
     return (
@@ -46,6 +63,7 @@ export default function CommunityRecipeDetail() {
     );
 
   const fav = isFavorite(recipe.id);
+  const canFollow = isAuthenticated && authorProfile?.id && authorProfile.id !== user?.id;
   const title = localized(recipe, "title", lang);
   const description = localized(recipe, "description", lang);
   const ingredients = localized(recipe, "ingredients", lang) || [];
@@ -59,6 +77,40 @@ export default function CommunityRecipeDetail() {
     `${t("common.steps")}: ${steps.join(". ")}`,
     zeroWaste ? `${t("recipe_detail.zero_waste_title")}: ${zeroWaste}` : "",
   ].filter(Boolean).join(". ");
+
+  const toggleLike = async () => {
+    if (!isAuthenticated) return;
+    const nextLiked = !engagement.liked;
+    setEngagement((current) => ({
+      ...current,
+      liked: nextLiked,
+      likeCount: Math.max(0, current.likeCount + (nextLiked ? 1 : -1)),
+    }));
+
+    try {
+      await appApi.social.toggleRecipeLike(recipe.id, engagement.liked);
+    } catch {
+      loadEngagement();
+    }
+  };
+
+  const addComment = async () => {
+    if (!commentText.trim()) return;
+    setCommenting(true);
+    try {
+      await appApi.social.addComment(recipe.id, commentText);
+      setCommentText("");
+      loadEngagement();
+    } finally {
+      setCommenting(false);
+    }
+  };
+
+  const deleteComment = async (commentId) => {
+    if (!confirm(t("community.comment_delete_confirm"))) return;
+    await appApi.social.deleteComment(commentId);
+    loadEngagement();
+  };
 
   return (
     <Layout>
@@ -104,7 +156,14 @@ export default function CommunityRecipeDetail() {
             </div>
             <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <ChefHat className="w-4 h-4 text-primary" /> {t("community.contributed_by")} <span className="font-semibold text-foreground/80">{recipe.author}</span>
+                <ChefHat className="w-4 h-4 text-primary" /> {t("community.contributed_by")}{" "}
+                {authorProfile?.public_user_id ? (
+                  <Link to={`/u/${authorProfile.public_user_id}`} className="font-semibold text-primary hover:underline">
+                    {authorProfile.full_name || recipe.author}
+                  </Link>
+                ) : (
+                  <span className="font-semibold text-foreground/80">{recipe.author}</span>
+                )}
               </span>
               {cookTime != null && (
                 <span className="flex items-center gap-1.5">
@@ -123,6 +182,42 @@ export default function CommunityRecipeDetail() {
               <div className="mt-3 inline-flex items-center gap-1.5 text-xs text-primary font-medium">
                 <Bookmark className="w-3.5 h-3.5 fill-primary" /> {t("community.bookmarked")}
               </div>
+            )}
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border/40 pt-4">
+              <button
+                type="button"
+                onClick={toggleLike}
+                disabled={!isAuthenticated}
+                title={!isAuthenticated ? t("community.login_to_comment") : undefined}
+                className={`inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-xs font-bold transition-colors ${
+                  engagement.liked ? "bg-red-100 text-red-700" : "bg-secondary text-foreground/75 hover:text-primary"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                <Heart className={`h-4 w-4 ${engagement.liked ? "fill-current" : ""}`} />
+                {engagement.likeCount} {t("community.likes")}
+              </button>
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-4 py-2 text-xs font-bold text-foreground/75">
+                <MessageCircle className="h-4 w-4" />
+                {engagement.comments.length} {t("community.comments")}
+              </div>
+            </div>
+            {canFollow && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (following) {
+                    await appApi.social.unfollow(authorProfile.id);
+                    setFollowing(false);
+                  } else {
+                    await appApi.social.follow(authorProfile.id);
+                    setFollowing(true);
+                  }
+                }}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground"
+              >
+                {following ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
+                {following ? "Following" : "Follow"}
+              </button>
             )}
           </div>
         </div>
@@ -182,6 +277,68 @@ export default function CommunityRecipeDetail() {
             </div>
           </div>
         )}
+
+        <div className="glass-card rounded-3xl border border-border/60 p-5 mb-6">
+          <h2 className="font-heading font-bold text-lg text-primary flex items-center gap-2">
+            <MessageCircle className="w-5 h-5" /> {t("community.comments")}
+          </h2>
+          {isAuthenticated ? (
+            <div className="mt-4 flex gap-2">
+              <input
+                value={commentText}
+                onChange={(event) => setCommentText(event.target.value)}
+                maxLength={500}
+                placeholder={t("community.comment_placeholder")}
+                className="min-w-0 flex-1 rounded-2xl border border-border bg-background px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                type="button"
+                onClick={addComment}
+                disabled={commenting || !commentText.trim()}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground disabled:opacity-60"
+                aria-label={t("community.comment_send")}
+                title={t("community.comment_send")}
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="mt-4 inline-flex rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-primary hover:bg-secondary/70"
+            >
+              {t("community.login_to_comment")}
+            </Link>
+          )}
+          <div className="mt-4 space-y-3">
+            {engagement.comments.length === 0 ? (
+              <p className="rounded-2xl border border-dashed border-border bg-secondary/40 p-5 text-center text-sm text-muted-foreground">
+                {t("community.comment_empty")}
+              </p>
+            ) : engagement.comments.map((comment) => (
+              <div key={comment.id} className="rounded-2xl border border-border/60 bg-background p-3">
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold">{comment.author?.full_name || "Ingrevia user"}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(comment.created_date).toLocaleString()}</p>
+                  </div>
+                  {(comment.user_id === user?.id || user?.role === "admin") && (
+                    <button
+                      type="button"
+                      onClick={() => deleteComment(comment.id)}
+                      className="rounded-full bg-red-50 p-2 text-red-600 hover:bg-red-100"
+                      aria-label={t("community.comment_delete")}
+                      title={t("community.comment_delete")}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <p className="whitespace-pre-wrap text-sm leading-relaxed">{comment.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Share CTA */}
         <div className="rounded-3xl bg-secondary/60 border border-border/60 p-6 text-center">

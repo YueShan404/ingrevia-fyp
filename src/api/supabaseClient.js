@@ -125,6 +125,74 @@ export const appApi = {
     },
   },
 
+  activity: {
+    async listMine() {
+      const user = await getCurrentUser();
+      await supabase.rpc("delete_expired_scan_history").catch(() => {});
+
+      const [scans, bookmarks, likes, comments] = await Promise.all([
+        supabase
+          .from("scan_history")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_date", { ascending: false })
+          .limit(50),
+        supabase
+          .from("recipe_bookmarks")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_date", { ascending: false })
+          .limit(50),
+        supabase
+          .from("community_recipe_likes")
+          .select("*, community_recipes(*)")
+          .eq("user_id", user.id)
+          .order("created_date", { ascending: false })
+          .limit(50),
+        supabase
+          .from("community_recipe_comments")
+          .select("*, community_recipes(*)")
+          .eq("user_id", user.id)
+          .order("created_date", { ascending: false })
+          .limit(50),
+      ]);
+
+      const error = scans.error || bookmarks.error || likes.error || comments.error;
+      if (error) throw error;
+
+      const bookmarkRows = bookmarks.data || [];
+      const recipeIds = bookmarkRows.filter((item) => item.recipe_type === "recipe").map((item) => item.recipe_id);
+      const communityRecipeIds = bookmarkRows
+        .filter((item) => item.recipe_type === "community_recipe")
+        .map((item) => item.recipe_id);
+
+      const [recipeRows, communityRecipeRows] = await Promise.all([
+        recipeIds.length
+          ? supabase.from("recipes").select("*").in("id", recipeIds)
+          : Promise.resolve({ data: [], error: null }),
+        communityRecipeIds.length
+          ? supabase.from("community_recipes").select("*").in("id", communityRecipeIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+
+      if (recipeRows.error || communityRecipeRows.error) throw recipeRows.error || communityRecipeRows.error;
+
+      const recipesById = Object.fromEntries((recipeRows.data || []).map((recipe) => [recipe.id, recipe]));
+      const communityRecipesById = Object.fromEntries((communityRecipeRows.data || []).map((recipe) => [recipe.id, recipe]));
+      const saved = bookmarkRows.map((item) => ({
+        ...item,
+        recipe: item.recipe_type === "recipe" ? recipesById[item.recipe_id] : communityRecipesById[item.recipe_id],
+      }));
+
+      return {
+        scans: scans.data || [],
+        saved,
+        liked: likes.data || [],
+        commented: comments.data || [],
+      };
+    },
+  },
+
   auth: {
     async me() {
       const { data: { user }, error } = await supabase.auth.getUser();
@@ -338,9 +406,101 @@ export const appApi = {
       if (error) throw error;
       return data;
     },
+
+    async listForAdmin() {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id,email,full_name,avatar_url,public_user_id,role,status,created_date,updated_date")
+        .order("created_date", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+
+    async setStatus(userId, status) {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ status })
+        .eq("id", userId)
+        .select("id,email,full_name,role,status")
+        .single();
+      if (error) throw error;
+      return data;
+    },
   },
 
   social: {
+    async getRecipeEngagement(recipeId) {
+      const user = await getCurrentUser();
+      const [likes, ownLike, comments] = await Promise.all([
+        supabase.from("community_recipe_likes").select("id", { count: "exact", head: true }).eq("recipe_id", recipeId),
+        supabase.from("community_recipe_likes").select("id").eq("recipe_id", recipeId).eq("user_id", user.id).maybeSingle(),
+        supabase
+          .from("community_recipe_comments")
+          .select("*")
+          .eq("recipe_id", recipeId)
+          .order("created_date", { ascending: false }),
+      ]);
+
+      const error = likes.error || (ownLike.error && ownLike.error.code !== "PGRST116" ? ownLike.error : null) || comments.error;
+      if (error) throw error;
+
+      const authorIds = [...new Set((comments.data || []).map((comment) => comment.user_id).filter(Boolean))];
+      const { data: profiles, error: profileError } = authorIds.length
+        ? await supabase.from("profiles").select("id,full_name,avatar_url,public_user_id").in("id", authorIds)
+        : { data: [], error: null };
+      if (profileError) throw profileError;
+
+      const profileById = Object.fromEntries((profiles || []).map((profile) => [profile.id, profile]));
+
+      return {
+        likeCount: likes.count || 0,
+        liked: Boolean(ownLike.data),
+        comments: (comments.data || []).map((comment) => ({
+          ...comment,
+          author: profileById[comment.user_id] || null,
+        })),
+      };
+    },
+
+    async toggleRecipeLike(recipeId, liked) {
+      const user = await getCurrentUser();
+      if (liked) {
+        const { error } = await supabase
+          .from("community_recipe_likes")
+          .delete()
+          .eq("recipe_id", recipeId)
+          .eq("user_id", user.id);
+        if (error) throw error;
+        return false;
+      }
+
+      const { error } = await supabase
+        .from("community_recipe_likes")
+        .insert({ recipe_id: recipeId, user_id: user.id });
+      if (error && error.code !== "23505") throw error;
+      return true;
+    },
+
+    async addComment(recipeId, body) {
+      const user = await getCurrentUser();
+      const text = String(body || "").trim();
+      if (!text) throw new Error("Comment cannot be empty.");
+
+      const { data, error } = await supabase
+        .from("community_recipe_comments")
+        .insert({ recipe_id: recipeId, user_id: user.id, body: text })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
+    async deleteComment(commentId) {
+      const { error } = await supabase.from("community_recipe_comments").delete().eq("id", commentId);
+      if (error) throw error;
+      return true;
+    },
+
     async isFollowing(followingId) {
       const { data, error } = await supabase
         .from("user_follows")

@@ -161,6 +161,23 @@ create table if not exists public.notifications (
   read boolean not null default false
 );
 
+create table if not exists public.community_recipe_likes (
+  id uuid primary key default gen_random_uuid(),
+  created_date timestamptz not null default now(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  recipe_id uuid not null references public.community_recipes(id) on delete cascade,
+  unique (user_id, recipe_id)
+);
+
+create table if not exists public.community_recipe_comments (
+  id uuid primary key default gen_random_uuid(),
+  created_date timestamptz not null default now(),
+  updated_date timestamptz not null default now(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  recipe_id uuid not null references public.community_recipes(id) on delete cascade,
+  body text not null check (char_length(trim(body)) between 1 and 500)
+);
+
 create or replace function public.set_updated_date()
 returns trigger as $$
 begin
@@ -257,6 +274,10 @@ drop trigger if exists set_scan_history_updated_date on public.scan_history;
 create trigger set_scan_history_updated_date before update on public.scan_history
 for each row execute function public.set_updated_date();
 
+drop trigger if exists set_community_recipe_comments_updated_date on public.community_recipe_comments;
+create trigger set_community_recipe_comments_updated_date before update on public.community_recipe_comments
+for each row execute function public.set_updated_date();
+
 drop trigger if exists set_profiles_updated_date on public.profiles;
 create trigger set_profiles_updated_date before update on public.profiles
 for each row execute function public.set_updated_date();
@@ -272,6 +293,8 @@ alter table public.scan_history enable row level security;
 alter table public.recipe_bookmarks enable row level security;
 alter table public.user_follows enable row level security;
 alter table public.notifications enable row level security;
+alter table public.community_recipe_likes enable row level security;
+alter table public.community_recipe_comments enable row level security;
 alter table public.profiles enable row level security;
 
 update public.profiles
@@ -290,6 +313,8 @@ grant execute on function public.delete_expired_scan_history() to authenticated;
 grant select, insert, delete on public.recipe_bookmarks to authenticated;
 grant select, insert, delete on public.user_follows to authenticated;
 grant select, insert, update, delete on public.notifications to authenticated;
+grant select, insert, delete on public.community_recipe_likes to authenticated;
+grant select, insert, update, delete on public.community_recipe_comments to authenticated;
 grant insert, update, delete on public.ingredients to authenticated;
 grant insert, update, delete on public.recipes to authenticated;
 grant update, delete on public.community_recipes to authenticated;
@@ -336,6 +361,14 @@ drop policy if exists "Users can unfollow profiles" on public.user_follows;
 drop policy if exists "Users can read own notifications" on public.notifications;
 drop policy if exists "Users can create follower notifications" on public.notifications;
 drop policy if exists "Users can update own notifications" on public.notifications;
+drop policy if exists "Authenticated users can read community likes" on public.community_recipe_likes;
+drop policy if exists "Users can like approved community recipes" on public.community_recipe_likes;
+drop policy if exists "Users can unlike community recipes" on public.community_recipe_likes;
+drop policy if exists "Authenticated users can read community comments" on public.community_recipe_comments;
+drop policy if exists "Users can comment on approved community recipes" on public.community_recipe_comments;
+drop policy if exists "Users can update own community comments" on public.community_recipe_comments;
+drop policy if exists "Users can delete own community comments" on public.community_recipe_comments;
+drop policy if exists "Admins can delete community comments" on public.community_recipe_comments;
 
 create policy "Public can read ingredients" on public.ingredients for select using (true);
 create policy "Public can read recipes" on public.recipes for select using (true);
@@ -406,6 +439,32 @@ create policy "Users can create follower notifications" on public.notifications
   );
 create policy "Users can update own notifications" on public.notifications
   for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+create policy "Authenticated users can read community likes" on public.community_recipe_likes
+  for select to authenticated using (public.is_active_user());
+create policy "Users can like approved community recipes" on public.community_recipe_likes
+  for insert to authenticated with check (
+    user_id = auth.uid()
+    and public.is_active_user()
+    and exists (select 1 from public.community_recipes r where r.id = recipe_id and r.status = 'approved')
+  );
+create policy "Users can unlike community recipes" on public.community_recipe_likes
+  for delete to authenticated using (user_id = auth.uid() and public.is_active_user());
+
+create policy "Authenticated users can read community comments" on public.community_recipe_comments
+  for select to authenticated using (public.is_active_user());
+create policy "Users can comment on approved community recipes" on public.community_recipe_comments
+  for insert to authenticated with check (
+    user_id = auth.uid()
+    and public.is_active_user()
+    and exists (select 1 from public.community_recipes r where r.id = recipe_id and r.status = 'approved')
+  );
+create policy "Users can update own community comments" on public.community_recipe_comments
+  for update to authenticated using (user_id = auth.uid() and public.is_active_user()) with check (user_id = auth.uid());
+create policy "Users can delete own community comments" on public.community_recipe_comments
+  for delete to authenticated using (user_id = auth.uid() and public.is_active_user());
+create policy "Admins can delete community comments" on public.community_recipe_comments
+  for delete to authenticated using (public.is_admin());
 
 insert into storage.buckets (id, name, public)
 values ('ingrevia-uploads', 'ingrevia-uploads', true)

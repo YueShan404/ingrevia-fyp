@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import Layout from "@/components/Layout";
 import IngreviaLoader from "@/components/IngreviaLoader";
 import { useToast } from "@/components/ui/use-toast";
-import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages } from "lucide-react";
+import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages, UserX, ShieldCheck } from "lucide-react";
 
 export default function Admin() {
   const { t, lang } = useI18n();
@@ -13,6 +13,7 @@ export default function Admin() {
   const [ingredients, setIngredients] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [community, setCommunity] = useState([]);
+  const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -27,10 +28,12 @@ export default function Admin() {
       appApi.entities.Ingredient.list().catch(() => []),
       appApi.entities.Recipe.list().catch(() => []),
       appApi.entities.CommunityRecipe.list("-created_date").catch(() => []),
-    ]).then(([ings, recs, comm]) => {
+      appApi.profiles.listForAdmin().catch(() => []),
+    ]).then(([ings, recs, comm, users]) => {
       setIngredients(ings || []);
       setRecipes(recs || []);
       setCommunity(comm || []);
+      setProfiles(users || []);
       setLoading(false);
     });
   };
@@ -182,11 +185,16 @@ export default function Admin() {
     await appApi.entities.CommunityRecipe.delete(id);
     loadAll();
   };
+  const setUserStatus = async (id, status) => {
+    await appApi.profiles.setStatus(id, status);
+    loadAll();
+  };
 
   const tabs = [
     { key: "ingredients", label: t("admin.tab_ingredients"), icon: BookOpen, count: ingredients.length },
     { key: "recipes", label: t("admin.tab_recipes"), icon: ChefHat, count: recipes.length },
     { key: "community", label: t("admin.tab_community"), icon: Users, count: community.filter((c) => c.status === "pending").length },
+    { key: "users", label: t("admin.tab_users"), icon: ShieldCheck, count: profiles.filter((p) => p.status === "blocked").length },
   ];
 
   if (user?.role !== "admin") {
@@ -286,7 +294,7 @@ export default function Admin() {
                 ),
               })} t={t} />
           </>
-        ) : (
+        ) : tab === "community" ? (
           <div className="space-y-3">
             {community.length === 0 ? (
               <p className="text-center text-muted-foreground py-12">{t("common.no_results")}</p>
@@ -313,6 +321,55 @@ export default function Admin() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {profiles.length === 0 ? (
+              <p className="text-center text-muted-foreground py-12">{t("common.no_results")}</p>
+            ) : profiles.map((profile) => (
+              <div key={profile.id} className="glass-card rounded-2xl border border-border/50 p-4 flex items-center gap-4">
+                {profile.avatar_url ? (
+                  <img src={profile.avatar_url} alt="" className="w-12 h-12 rounded-xl object-cover shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-secondary shrink-0 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm truncate">{profile.full_name || profile.email}</p>
+                  <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+                  <div className="mt-1 flex flex-wrap gap-1.5">
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-foreground/70">{profile.role}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      profile.status === "blocked" ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"
+                    }`}>{profile.status}</span>
+                  </div>
+                </div>
+                {profile.id !== user?.id && (
+                  profile.status === "blocked" ? (
+                    <button
+                      type="button"
+                      onClick={() => setUserStatus(profile.id, "active")}
+                      className="shrink-0 p-2 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 hover:scale-110 transition-transform"
+                      title={t("admin.activate_user")}
+                      aria-label={t("admin.activate_user")}
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setUserStatus(profile.id, "blocked")}
+                      className="shrink-0 p-2 rounded-full bg-red-100 dark:bg-red-900 text-red-600 hover:scale-110 transition-transform"
+                      title={t("admin.block_user")}
+                      aria-label={t("admin.block_user")}
+                    >
+                      <UserX className="w-4 h-4" />
+                    </button>
+                  )
+                )}
               </div>
             ))}
           </div>
