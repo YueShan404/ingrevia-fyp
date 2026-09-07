@@ -66,7 +66,7 @@ export default function Profile() {
     return () => window.clearInterval(timer);
   }, [cooldown.locked]);
 
-  const displayName = user?.full_name || user?.email || "Ingrevia user";
+  const displayName = user?.full_name || user?.email || t("profile.default_user");
   const initials = displayName
     .split(/\s+/)
     .filter(Boolean)
@@ -86,7 +86,7 @@ export default function Profile() {
       const { file_url } = await appApi.integrations.Core.UploadFile({ file });
       setAvatarUrl(file_url);
     } catch (err) {
-      alert("Profile image upload failed: " + (err.message || "Please try again."));
+      alert(`${t("profile.image_upload_failed")}: ${err.message || t("common.try_again")}`);
     } finally {
       setSaving(false);
     }
@@ -98,9 +98,9 @@ export default function Profile() {
       await appApi.profiles.updateOwnProfile({ full_name: name, avatar_url: avatarUrl });
       await checkUserAuth();
       setEditOpen(false);
-      alert(isAdmin ? "Profile updated. Admin can edit again anytime." : "Profile updated. You can change it again after 7 days.");
+      alert(isAdmin ? t("profile.update_success_admin") : t("profile.update_success_user"));
     } catch (err) {
-      alert(err.message || "Profile update failed.");
+      alert(err.message || t("profile.update_failed"));
     } finally {
       setSaving(false);
     }
@@ -110,7 +110,7 @@ export default function Profile() {
     if (!profileUrl) return;
     const shareData = {
       title: `${displayName} on Ingrevia`,
-      text: `View ${displayName}'s Ingrevia profile`,
+      text: t("profile.share_text").replace("{name}", displayName),
       url: profileUrl,
     };
 
@@ -120,11 +120,11 @@ export default function Profile() {
         return;
       }
       await navigator.clipboard?.writeText(profileUrl);
-      alert("Profile link copied.");
+      alert(t("profile.link_copied"));
     } catch (error) {
       if (error?.name !== "AbortError") {
         await navigator.clipboard?.writeText(profileUrl);
-        alert("Profile link copied.");
+        alert(t("profile.link_copied"));
       }
     }
   };
@@ -154,8 +154,8 @@ export default function Profile() {
                     type="button"
                     onClick={() => setEditOpen(true)}
                     className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                    aria-label="Edit public profile"
-                    title="Edit public profile"
+                    aria-label={t("profile.edit_public")}
+                    title={t("profile.edit_public")}
                   >
                     <Edit3 className="h-4 w-4" />
                   </button>
@@ -164,8 +164,8 @@ export default function Profile() {
                       type="button"
                       onClick={shareProfile}
                       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-sm hover:bg-secondary/70"
-                      aria-label="Share public profile"
-                      title="Share public profile"
+                      aria-label={t("profile.share_public")}
+                      title={t("profile.share_public")}
                     >
                       <Share2 className="h-4 w-4" />
                     </button>
@@ -189,9 +189,9 @@ export default function Profile() {
         <section className="mt-6 rounded-[28px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="font-heading text-xl font-bold">Public Profile</h2>
+              <h2 className="font-heading text-xl font-bold">{t("profile.public_profile")}</h2>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                {isAdmin ? "Admin can update profile details anytime." : "Change your profile picture and name once every 7 days."}
+                {isAdmin ? t("profile.public_desc_admin") : t("profile.public_desc_user")}
               </p>
             </div>
             {profileUrl && (
@@ -200,7 +200,7 @@ export default function Profile() {
                 onClick={shareProfile}
                 className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-bold text-foreground hover:bg-secondary/60"
               >
-                <Share2 className="h-4 w-4" /> Share profile
+                <Share2 className="h-4 w-4" /> {t("profile.share_profile")}
               </button>
             )}
           </div>
@@ -214,14 +214,14 @@ export default function Profile() {
               </div>
             )}
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-muted-foreground">Display name</p>
+              <p className="truncate text-sm font-semibold text-muted-foreground">{t("profile.display_name")}</p>
               <p className="truncate font-heading text-2xl font-extrabold text-foreground">{displayName}</p>
               <p className={`mt-2 text-sm font-medium ${cooldown.locked ? "text-amber-700" : "text-emerald-700"}`}>
                 {cooldown.locked
-                  ? `You can edit again in ${remaining}.`
+                  ? t("profile.edit_remaining").replace("{time}", remaining)
                   : isAdmin
-                    ? "Admin profile changes are available anytime."
-                    : "Profile changes are available now."}
+                    ? t("profile.available_admin")
+                    : t("profile.available_user")}
               </p>
             </div>
           </div>
@@ -229,29 +229,29 @@ export default function Profile() {
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogContent className="max-w-md rounded-3xl">
               <DialogHeader>
-                <DialogTitle>Edit public profile</DialogTitle>
+                <DialogTitle>{t("profile.edit_public")}</DialogTitle>
                 <DialogDescription>
                   {cooldown.locked
-                    ? `Next profile change available in ${remaining}.`
+                    ? t("profile.next_change_in").replace("{time}", remaining)
                     : isAdmin
-                      ? "Update your admin display name or profile picture anytime."
-                      : "Update your display name or profile picture."}
+                      ? t("profile.dialog_desc_admin")
+                      : t("profile.dialog_desc_user")}
                 </DialogDescription>
               </DialogHeader>
               {cooldown.locked && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">
-                  Next profile change available on {cooldown.nextChangeDate.toLocaleDateString()}.
+                  {t("profile.next_change_on").replace("{date}", cooldown.nextChangeDate.toLocaleDateString())}
                 </div>
               )}
               <div className="grid gap-4 sm:grid-cols-[112px_1fr] sm:items-end">
                 <label className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-secondary/40 text-center text-sm font-bold text-muted-foreground ${cooldown.locked ? "cursor-not-allowed opacity-60" : "hover:border-primary hover:text-primary"}`}>
                   {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full rounded-3xl object-cover" /> : <Upload className="mb-2 h-6 w-6" />}
-                  {!avatarUrl && "Upload"}
+                  {!avatarUrl && t("common.upload")}
                   <input type="file" accept="image/jpeg,image/png,image/webp" disabled={cooldown.locked || saving} className="hidden" onChange={(e) => handleAvatar(e.target.files?.[0])} />
                 </label>
                 <div className="space-y-3">
                   <label className="block text-sm font-semibold">
-                    Display name
+                    {t("profile.display_name")}
                     <input
                       value={name}
                       disabled={cooldown.locked || saving}
@@ -265,7 +265,7 @@ export default function Profile() {
                     onClick={saveProfile}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60"
                   >
-                    {saving && <Loader2 className="h-4 w-4 animate-spin" />} Save profile
+                    {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t("profile.save_profile")}
                   </button>
                 </div>
               </div>
@@ -324,11 +324,11 @@ export default function Profile() {
         </section>
 
         <section className="mt-6 rounded-[28px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
-          <h2 className="font-heading text-xl font-bold">Notifications</h2>
+          <h2 className="font-heading text-xl font-bold">{t("profile.notifications")}</h2>
           <div className="mt-4 space-y-3">
             {notifications.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
-                No follower notifications yet.
+                {t("profile.notifications_empty")}
               </div>
             ) : (
               notifications.map((notification) => (

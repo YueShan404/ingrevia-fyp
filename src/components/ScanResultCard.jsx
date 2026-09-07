@@ -5,10 +5,10 @@ import { CheckCircle2, AlertTriangle, ArrowRight, BookOpen, ChefHat, Sparkles } 
 
 const NUT_CHIPS = [
   { key: "calories", label: "kcal", unit: "" },
-  { key: "protein", label: "Protein", unit: "g" },
-  { key: "carbs", label: "Carbs", unit: "g" },
-  { key: "fiber", label: "Fiber", unit: "g" },
-  { key: "fat", label: "Fat", unit: "g" },
+  { key: "protein", labelKey: "nutrition.protein", unit: "g" },
+  { key: "carbs", labelKey: "nutrition.carbs", unit: "g" },
+  { key: "fiber", labelKey: "nutrition.fiber", unit: "g" },
+  { key: "fat", labelKey: "nutrition.fat", unit: "g" },
 ];
 
 /**
@@ -92,7 +92,7 @@ export default function ScanResultCard({ result, recipes = [] }) {
                   if (v == null) return null;
                   return (
                     <div key={n.key} className="text-center px-2 py-2 rounded-xl bg-secondary/60 border border-border/40">
-                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{n.label}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{n.labelKey ? t(n.labelKey) : n.label}</p>
                       <p className="font-heading font-bold text-base">
                         {v}{n.unit && <span className="text-[10px] text-muted-foreground ml-0.5">{n.unit}</span>}
                       </p>
@@ -171,7 +171,7 @@ export default function ScanResultCard({ result, recipes = [] }) {
             <p className="font-semibold">{result?.ingredient_name ? result.ingredient_name : t("scanner.not_matched")}</p>
             {result?.ingredient_name && (
               <p className="mt-1 text-xs font-semibold text-primary">
-                Detected from the image, but it is not in your Ingrevia catalogue yet.
+                {t("scanner.detected_not_catalogue")}
               </p>
             )}
             <p className="text-sm text-muted-foreground mt-1">{result?.description}</p>

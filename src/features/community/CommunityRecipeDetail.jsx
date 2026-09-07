@@ -216,7 +216,7 @@ export default function CommunityRecipeDetail() {
                 className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-xs font-bold text-primary-foreground"
               >
                 {following ? <UserCheck className="h-3.5 w-3.5" /> : <UserPlus className="h-3.5 w-3.5" />}
-                {following ? "Following" : "Follow"}
+                {following ? t("profile.following") : t("profile.follow")}
               </button>
             )}
           </div>
@@ -319,7 +319,7 @@ export default function CommunityRecipeDetail() {
               <div key={comment.id} className="rounded-2xl border border-border/60 bg-background p-3">
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{comment.author?.full_name || "Ingrevia user"}</p>
+                    <p className="truncate text-sm font-semibold">{comment.author?.full_name || t("profile.default_user")}</p>
                     <p className="text-xs text-muted-foreground">{new Date(comment.created_date).toLocaleString()}</p>
                   </div>
                   {(comment.user_id === user?.id || user?.role === "admin") && (

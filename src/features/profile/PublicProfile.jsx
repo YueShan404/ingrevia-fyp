@@ -5,11 +5,13 @@ import IngreviaLoader from "@/components/IngreviaLoader";
 import CommunityRecipeCard from "@/components/CommunityRecipeCard";
 import { appApi } from "@/api/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
+import { useI18n } from "@/lib/i18n";
 import { ArrowLeft, Copy, UserCheck, UserPlus } from "lucide-react";
 
 export default function PublicProfile() {
   const { publicUserId } = useParams();
   const { user } = useAuth();
+  const { t } = useI18n();
   const [profile, setProfile] = useState(null);
   const [recipes, setRecipes] = useState([]);
   const [following, setFollowing] = useState(false);
@@ -45,7 +47,7 @@ export default function PublicProfile() {
   if (loading) {
     return (
       <Layout>
-        <IngreviaLoader compact message="Loading profile..." />
+        <IngreviaLoader compact message={t("loading.profile")} />
       </Layout>
     );
   }
@@ -54,9 +56,9 @@ export default function PublicProfile() {
     return (
       <Layout>
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <p className="mb-4 text-muted-foreground">This community profile was not found.</p>
+          <p className="mb-4 text-muted-foreground">{t("profile.public_not_found")}</p>
           <Link to="/community" className="inline-flex items-center gap-2 font-bold text-primary">
-            <ArrowLeft className="h-4 w-4" /> Back to community
+            <ArrowLeft className="h-4 w-4" /> {t("community.back")}
           </Link>
         </div>
       </Layout>
@@ -67,7 +69,7 @@ export default function PublicProfile() {
     <Layout>
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
         <Link to="/community" className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary">
-          <ArrowLeft className="h-4 w-4" /> Back to community
+          <ArrowLeft className="h-4 w-4" /> {t("community.back")}
         </Link>
 
         <section className="rounded-[28px] border border-border/60 bg-card p-5 shadow-sm sm:p-7">
@@ -81,9 +83,9 @@ export default function PublicProfile() {
                 </div>
               )}
               <div className="min-w-0">
-                <h1 className="truncate font-heading text-3xl font-extrabold">{profile.full_name || "Ingrevia member"}</h1>
+                <h1 className="truncate font-heading text-3xl font-extrabold">{profile.full_name || t("profile.default_user")}</h1>
                 <p className="mt-1 text-sm font-bold text-primary">@{profile.public_user_id}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{userRecipes.length} shared recipes</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t("profile.shared_recipes_count").replace("{count}", userRecipes.length)}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -92,7 +94,7 @@ export default function PublicProfile() {
                 onClick={() => navigator.clipboard?.writeText(profileUrl)}
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-bold"
               >
-                <Copy className="h-4 w-4" /> Copy link
+                <Copy className="h-4 w-4" /> {t("profile.copy_link")}
               </button>
               {canFollow && (
                 <button
@@ -109,7 +111,7 @@ export default function PublicProfile() {
                   className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
                 >
                   {following ? <UserCheck className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-                  {following ? "Following" : "Follow"}
+                  {following ? t("profile.following") : t("profile.follow")}
                 </button>
               )}
             </div>
@@ -119,7 +121,7 @@ export default function PublicProfile() {
         <section className="mt-6 space-y-4">
           {userRecipes.length === 0 ? (
             <div className="rounded-[24px] border border-dashed border-border bg-card p-8 text-center text-sm text-muted-foreground">
-              No approved community recipes from this member yet.
+              {t("profile.no_public_recipes")}
             </div>
           ) : (
             userRecipes.map((recipe, index) => <CommunityRecipeCard key={recipe.id} recipe={recipe} index={index} />)
