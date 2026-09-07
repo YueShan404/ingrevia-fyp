@@ -108,6 +108,17 @@ export const appApi = {
   },
 
   scanHistory: {
+    async create(values) {
+      const user = await getCurrentUser();
+      const { data, error } = await supabase
+        .from("scan_history")
+        .insert({ ...values, user_id: user.id })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+
     async listRecent(days = 30, limit = 50) {
       const since = new Date();
       since.setDate(since.getDate() - days);
@@ -158,10 +169,12 @@ export const appApi = {
           .limit(50),
       ]);
 
-      const error = scans.error || bookmarks.error || likes.error || comments.error;
-      if (error) throw error;
+      if (scans.error) throw scans.error;
+      if (bookmarks.error) console.warn("Saved recipe history unavailable.", bookmarks.error);
+      if (likes.error) console.warn("Liked recipe history unavailable.", likes.error);
+      if (comments.error) console.warn("Comment history unavailable.", comments.error);
 
-      const bookmarkRows = bookmarks.data || [];
+      const bookmarkRows = bookmarks.error ? [] : bookmarks.data || [];
       const recipeIds = bookmarkRows.filter((item) => item.recipe_type === "recipe").map((item) => item.recipe_id);
       const communityRecipeIds = bookmarkRows
         .filter((item) => item.recipe_type === "community_recipe")
@@ -176,7 +189,8 @@ export const appApi = {
           : Promise.resolve({ data: [], error: null }),
       ]);
 
-      if (recipeRows.error || communityRecipeRows.error) throw recipeRows.error || communityRecipeRows.error;
+      if (recipeRows.error) console.warn("Recipe bookmark details unavailable.", recipeRows.error);
+      if (communityRecipeRows.error) console.warn("Community bookmark details unavailable.", communityRecipeRows.error);
 
       const recipesById = Object.fromEntries((recipeRows.data || []).map((recipe) => [recipe.id, recipe]));
       const communityRecipesById = Object.fromEntries((communityRecipeRows.data || []).map((recipe) => [recipe.id, recipe]));
@@ -188,8 +202,8 @@ export const appApi = {
       return {
         scans: scans.data || [],
         saved,
-        liked: likes.data || [],
-        commented: comments.data || [],
+        liked: likes.error ? [] : likes.data || [],
+        commented: comments.error ? [] : comments.data || [],
       };
     },
   },
