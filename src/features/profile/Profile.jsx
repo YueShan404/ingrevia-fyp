@@ -17,11 +17,11 @@ import {
   BarChart3,
   CalendarDays,
   ChefHat,
-  Copy,
   Edit3,
   History,
   Loader2,
   ScanLine,
+  Share2,
   Shield,
   Sparkles,
   Upload,
@@ -106,6 +106,29 @@ export default function Profile() {
     }
   };
 
+  const shareProfile = async () => {
+    if (!profileUrl) return;
+    const shareData = {
+      title: `${displayName} on Ingrevia`,
+      text: `View ${displayName}'s Ingrevia profile`,
+      url: profileUrl,
+    };
+
+    try {
+      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
+        await navigator.share(shareData);
+        return;
+      }
+      await navigator.clipboard?.writeText(profileUrl);
+      alert("Profile link copied.");
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        await navigator.clipboard?.writeText(profileUrl);
+        alert("Profile link copied.");
+      }
+    }
+  };
+
   return (
     <Layout>
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
@@ -125,7 +148,29 @@ export default function Profile() {
                   <Sparkles className="h-3.5 w-3.5" />
                   {t("profile.account")}
                 </div>
-                <h1 className="truncate font-heading text-3xl font-extrabold text-foreground sm:text-4xl">{displayName}</h1>
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <h1 className="min-w-0 truncate font-heading text-3xl font-extrabold text-foreground sm:text-4xl">{displayName}</h1>
+                  <button
+                    type="button"
+                    onClick={() => setEditOpen(true)}
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                    aria-label="Edit public profile"
+                    title="Edit public profile"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                  </button>
+                  {profileUrl && (
+                    <button
+                      type="button"
+                      onClick={shareProfile}
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-sm hover:bg-secondary/70"
+                      aria-label="Share public profile"
+                      title="Share public profile"
+                    >
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
                 <p className="mt-1 truncate text-sm font-medium text-muted-foreground">{user?.email}</p>
                 {user?.public_user_id && (
                   <p className="mt-1 truncate text-xs font-bold text-primary">@{user.public_user_id}</p>
@@ -149,24 +194,15 @@ export default function Profile() {
                 {isAdmin ? "Admin can update profile details anytime." : "Change your profile picture and name once every 7 days."}
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {profileUrl && (
-                <button
-                  type="button"
-                  onClick={() => navigator.clipboard?.writeText(profileUrl)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-bold text-foreground hover:bg-secondary/60"
-                >
-                  <Copy className="h-4 w-4" /> Copy link
-                </button>
-              )}
+            {profileUrl && (
               <button
                 type="button"
-                onClick={() => setEditOpen(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
+                onClick={shareProfile}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-bold text-foreground hover:bg-secondary/60"
               >
-                <Edit3 className="h-4 w-4" /> Edit
+                <Share2 className="h-4 w-4" /> Share profile
               </button>
-            </div>
+            )}
           </div>
 
           <div className="flex items-center gap-4">
