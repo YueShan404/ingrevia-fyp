@@ -178,6 +178,18 @@ create table if not exists public.community_recipe_comments (
   body text not null check (char_length(trim(body)) between 1 and 500)
 );
 
+create table if not exists public.feedback_reports (
+  id uuid primary key default gen_random_uuid(),
+  created_date timestamptz not null default now(),
+  updated_date timestamptz not null default now(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  type text not null default 'feedback' check (type in ('feedback', 'issue')),
+  subject text not null check (char_length(trim(subject)) between 1 and 120),
+  message text not null check (char_length(trim(message)) between 1 and 1000),
+  page_url text,
+  status text not null default 'open' check (status in ('open', 'resolved'))
+);
+
 create or replace function public.set_updated_date()
 returns trigger as $$
 begin
@@ -278,6 +290,10 @@ drop trigger if exists set_community_recipe_comments_updated_date on public.comm
 create trigger set_community_recipe_comments_updated_date before update on public.community_recipe_comments
 for each row execute function public.set_updated_date();
 
+drop trigger if exists set_feedback_reports_updated_date on public.feedback_reports;
+create trigger set_feedback_reports_updated_date before update on public.feedback_reports
+for each row execute function public.set_updated_date();
+
 drop trigger if exists set_profiles_updated_date on public.profiles;
 create trigger set_profiles_updated_date before update on public.profiles
 for each row execute function public.set_updated_date();
@@ -295,6 +311,7 @@ alter table public.user_follows enable row level security;
 alter table public.notifications enable row level security;
 alter table public.community_recipe_likes enable row level security;
 alter table public.community_recipe_comments enable row level security;
+alter table public.feedback_reports enable row level security;
 alter table public.profiles enable row level security;
 
 update public.profiles
@@ -315,6 +332,7 @@ grant select, insert, delete on public.user_follows to authenticated;
 grant select, insert, update, delete on public.notifications to authenticated;
 grant select, insert, delete on public.community_recipe_likes to authenticated;
 grant select, insert, update, delete on public.community_recipe_comments to authenticated;
+grant select, insert, update on public.feedback_reports to authenticated;
 grant insert, update, delete on public.ingredients to authenticated;
 grant insert, update, delete on public.recipes to authenticated;
 grant update, delete on public.community_recipes to authenticated;
@@ -369,6 +387,10 @@ drop policy if exists "Users can comment on approved community recipes" on publi
 drop policy if exists "Users can update own community comments" on public.community_recipe_comments;
 drop policy if exists "Users can delete own community comments" on public.community_recipe_comments;
 drop policy if exists "Admins can delete community comments" on public.community_recipe_comments;
+drop policy if exists "Users can create own feedback reports" on public.feedback_reports;
+drop policy if exists "Users can read own feedback reports" on public.feedback_reports;
+drop policy if exists "Admins can read feedback reports" on public.feedback_reports;
+drop policy if exists "Admins can update feedback reports" on public.feedback_reports;
 
 create policy "Public can read ingredients" on public.ingredients for select using (true);
 create policy "Public can read recipes" on public.recipes for select using (true);
@@ -469,6 +491,15 @@ create policy "Users can delete own community comments" on public.community_reci
   for delete to authenticated using (user_id = auth.uid() and public.is_active_user());
 create policy "Admins can delete community comments" on public.community_recipe_comments
   for delete to authenticated using (public.is_admin());
+
+create policy "Users can create own feedback reports" on public.feedback_reports
+  for insert to authenticated with check (user_id = auth.uid() and public.is_active_user());
+create policy "Users can read own feedback reports" on public.feedback_reports
+  for select to authenticated using (user_id = auth.uid() and public.is_active_user());
+create policy "Admins can read feedback reports" on public.feedback_reports
+  for select to authenticated using (public.is_admin());
+create policy "Admins can update feedback reports" on public.feedback_reports
+  for update to authenticated using (public.is_admin()) with check (public.is_admin());
 
 insert into storage.buckets (id, name, public)
 values ('ingrevia-uploads', 'ingrevia-uploads', true)

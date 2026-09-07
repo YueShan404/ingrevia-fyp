@@ -23,6 +23,7 @@ const tableByEntity = {
   Recipe: "recipes",
   CommunityRecipe: "community_recipes",
   ScanHistory: "scan_history",
+  Feedback: "feedback_reports",
 };
 
 const applySort = (query, sort) => {
@@ -205,6 +206,45 @@ export const appApi = {
         liked: likes.error ? [] : likes.data || [],
         commented: comments.error ? [] : comments.data || [],
       };
+    },
+  },
+
+  feedback: {
+    async create(values) {
+      const user = await getCurrentUser();
+      const payload = {
+        type: values.type || "feedback",
+        subject: String(values.subject || "").trim(),
+        message: String(values.message || "").trim(),
+        page_url: values.page_url || window.location.href,
+        user_id: user.id,
+      };
+      if (!payload.subject || !payload.message) throw new Error("Subject and message are required.");
+
+      const { data, error } = await supabase.from("feedback_reports").insert(payload).select("*").single();
+      if (error) throw error;
+      return data;
+    },
+
+    async listForAdmin() {
+      const { data, error } = await supabase
+        .from("feedback_reports")
+        .select("*, profiles:user_id(email,full_name,public_user_id)")
+        .order("created_date", { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data || [];
+    },
+
+    async setStatus(id, status) {
+      const { data, error } = await supabase
+        .from("feedback_reports")
+        .update({ status })
+        .eq("id", id)
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
     },
   },
 

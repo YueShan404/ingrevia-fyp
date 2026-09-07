@@ -18,6 +18,7 @@ import {
   CalendarDays,
   ChefHat,
   Edit3,
+  HelpCircle,
   History,
   Loader2,
   ScanLine,
@@ -279,6 +280,7 @@ export default function Profile() {
           <QuickAction icon={ChefHat} title={t("profile.favorites_title")} description={t("profile.favorites_desc")} to="/favorites" />
           <QuickAction icon={CalendarDays} title={t("profile.planner_title")} description={t("profile.planner_desc")} to="/planner" />
           <QuickAction icon={BarChart3} title={t("profile.dashboard_title")} description={t("profile.dashboard_desc")} to="/dashboard" />
+          <QuickAction icon={HelpCircle} title={t("profile.support_title")} description={t("profile.support_desc")} to="/support" />
           {user?.role === "admin" && (
             <QuickAction icon={Shield} title={t("profile.admin_title")} description={t("profile.admin_desc")} to="/admin" />
           )}

@@ -15,6 +15,7 @@ const MealPlanner = lazy(() => import('@/features/planner/MealPlanner'));
 const Dashboard = lazy(() => import('@/features/dashboard/Dashboard'));
 const Profile = lazy(() => import('@/features/profile/Profile'));
 const PublicProfile = lazy(() => import('@/features/profile/PublicProfile'));
+const Support = lazy(() => import('@/features/support/Support'));
 const Admin = lazy(() => import('@/features/admin/Admin'));
 const Login = lazy(() => import('@/features/auth/Login'));
 const Register = lazy(() => import('@/features/auth/Register'));
@@ -41,5 +42,6 @@ export const appRoutes = [
   { path: '/dashboard', element: <Dashboard />, protected: true },
   { path: '/profile', element: <Profile />, protected: true },
   { path: '/u/:publicUserId', element: <PublicProfile /> },
+  { path: '/support', element: <Support />, protected: true },
   { path: '/admin', element: <Admin />, protected: true },
 ];

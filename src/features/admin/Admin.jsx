@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import Layout from "@/components/Layout";
 import IngreviaLoader from "@/components/IngreviaLoader";
 import { useToast } from "@/components/ui/use-toast";
-import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages, UserX, ShieldCheck } from "lucide-react";
+import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages, UserX, ShieldCheck, MessageSquareWarning } from "lucide-react";
 
 export default function Admin() {
   const { t, lang } = useI18n();
@@ -14,6 +14,7 @@ export default function Admin() {
   const [recipes, setRecipes] = useState([]);
   const [community, setCommunity] = useState([]);
   const [profiles, setProfiles] = useState([]);
+  const [feedback, setFeedback] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -29,11 +30,13 @@ export default function Admin() {
       appApi.entities.Recipe.list().catch(() => []),
       appApi.entities.CommunityRecipe.list("-created_date").catch(() => []),
       appApi.profiles.listForAdmin().catch(() => []),
-    ]).then(([ings, recs, comm, users]) => {
+      appApi.feedback.listForAdmin().catch(() => []),
+    ]).then(([ings, recs, comm, users, reports]) => {
       setIngredients(ings || []);
       setRecipes(recs || []);
       setCommunity(comm || []);
       setProfiles(users || []);
+      setFeedback(reports || []);
       setLoading(false);
     });
   };
@@ -189,12 +192,17 @@ export default function Admin() {
     await appApi.profiles.setStatus(id, status);
     loadAll();
   };
+  const setFeedbackStatus = async (id, status) => {
+    await appApi.feedback.setStatus(id, status);
+    loadAll();
+  };
 
   const tabs = [
     { key: "ingredients", label: t("admin.tab_ingredients"), icon: BookOpen, count: ingredients.length },
     { key: "recipes", label: t("admin.tab_recipes"), icon: ChefHat, count: recipes.length },
     { key: "community", label: t("admin.tab_community"), icon: Users, count: community.filter((c) => c.status === "pending").length },
     { key: "users", label: t("admin.tab_users"), icon: ShieldCheck, count: profiles.filter((p) => p.status === "blocked").length },
+    { key: "feedback", label: t("admin.tab_feedback"), icon: MessageSquareWarning, count: feedback.filter((item) => item.status === "open").length },
   ];
 
   if (user?.role !== "admin") {
@@ -324,7 +332,7 @@ export default function Admin() {
               </div>
             ))}
           </div>
-        ) : (
+        ) : tab === "users" ? (
           <div className="space-y-3">
             {profiles.length === 0 ? (
               <p className="text-center text-muted-foreground py-12">{t("common.no_results")}</p>
@@ -370,6 +378,44 @@ export default function Admin() {
                     </button>
                   )
                 )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {feedback.length === 0 ? (
+              <p className="text-center text-muted-foreground py-12">{t("common.no_results")}</p>
+            ) : feedback.map((item) => (
+              <div key={item.id} className="glass-card rounded-2xl border border-border/50 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                        item.type === "issue" ? "bg-red-100 text-red-700" : "bg-secondary text-primary"
+                      }`}>{item.type}</span>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                        item.status === "resolved" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                      }`}>{item.status}</span>
+                    </div>
+                    <p className="font-semibold text-sm">{item.subject}</p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{item.message}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {item.profiles?.full_name || item.profiles?.email || t("profile.default_user")} · {new Date(item.created_date).toLocaleString()}
+                    </p>
+                    {item.page_url && (
+                      <a href={item.page_url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-xs font-semibold text-primary hover:underline">
+                        {item.page_url}
+                      </a>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFeedbackStatus(item.id, item.status === "resolved" ? "open" : "resolved")}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full bg-secondary px-4 py-2 text-sm font-bold text-foreground hover:bg-secondary/70"
+                  >
+                    {item.status === "resolved" ? t("admin.reopen") : t("admin.resolve")}
+                  </button>
+                </div>
               </div>
             ))}
           </div>
