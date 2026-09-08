@@ -143,11 +143,11 @@ export default function Profile() {
     <Layout>
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         <section className="overflow-hidden rounded-[28px] border border-border/60 bg-card shadow-sm">
-          <div className="relative h-40 overflow-hidden bg-[linear-gradient(135deg,rgba(91,44,111,0.16),rgba(216,129,102,0.18),rgba(42,125,83,0.14))] sm:h-52">
+          <div className="relative h-28 overflow-hidden bg-[linear-gradient(135deg,rgba(91,44,111,0.16),rgba(216,129,102,0.18),rgba(42,125,83,0.14))] sm:h-36">
             <div className="absolute inset-x-0 bottom-0 h-px bg-border/60" />
           </div>
           <div className="px-5 pb-5 sm:px-7 sm:pb-7">
-            <div className="-mt-12 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="mt-5 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end">
                 {avatarUrl ? (
                   <img src={avatarUrl} alt={displayName} className="h-28 w-28 shrink-0 rounded-[30px] object-cover shadow-lg shadow-primary/15 ring-4 ring-card" />
@@ -296,10 +296,18 @@ function ProfileEditDialog({ avatarUrl, cooldown, displayName, editOpen, handleA
             {t("profile.next_change_on").replace("{date}", cooldown.nextChangeDate.toLocaleDateString())}
           </div>
         )}
-        <div className="grid gap-4 sm:grid-cols-[112px_1fr] sm:items-end">
-          <label className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-secondary/40 text-center text-sm font-bold text-muted-foreground ${cooldown.locked ? "cursor-not-allowed opacity-60" : "hover:border-primary hover:text-primary"}`}>
-            {avatarUrl ? <img src={avatarUrl} alt={displayName} className="h-full w-full rounded-3xl object-cover" /> : <Upload className="mb-2 h-6 w-6" />}
-            {!avatarUrl && t("common.upload")}
+        <div className="grid gap-4 sm:grid-cols-[128px_1fr] sm:items-end">
+          <label className={`group cursor-pointer text-center text-sm font-bold ${cooldown.locked ? "cursor-not-allowed opacity-60" : "text-primary"}`}>
+            <span className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl border border-dashed border-border bg-secondary/40">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={displayName} className="h-full w-full object-cover" />
+              ) : (
+                <Upload className="h-7 w-7 text-muted-foreground" />
+              )}
+            </span>
+            <span className="mt-2 inline-flex items-center justify-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs text-foreground group-hover:bg-secondary/70">
+              <Upload className="h-3.5 w-3.5" /> {t("profile.change_photo")}
+            </span>
             <input type="file" accept="image/jpeg,image/png,image/webp" disabled={cooldown.locked || saving} className="hidden" onChange={(e) => handleAvatar(e.target.files?.[0])} />
           </label>
           <div className="space-y-3">
