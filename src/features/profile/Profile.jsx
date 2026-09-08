@@ -90,7 +90,13 @@ export default function Profile() {
       const { file_url } = await appApi.integrations.Core.UploadFile({ file });
       setAvatarUrl(file_url);
     } catch (err) {
-      alert(`${t("profile.image_upload_failed")}: ${err.message || t("common.try_again")}`);
+      try {
+        const fallbackUrl = await resizeAvatarToDataUrl(file);
+        setAvatarUrl(fallbackUrl);
+        alert(t("profile.image_ready_local"));
+      } catch {
+        alert(`${t("profile.image_upload_failed")}: ${err.message || t("common.try_again")}`);
+      }
     } finally {
       setSaving(false);
     }
@@ -137,7 +143,9 @@ export default function Profile() {
     <Layout>
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         <section className="overflow-hidden rounded-[28px] border border-border/60 bg-card shadow-sm">
-          <div className="h-40 bg-[linear-gradient(135deg,rgba(91,44,111,0.20),rgba(216,129,102,0.20),rgba(42,125,83,0.16)),url('/ingrevia-logo-transparent.png')] bg-[length:240px_auto] bg-[position:right_2rem_center] bg-no-repeat sm:h-52" />
+          <div className="relative h-40 overflow-hidden bg-[linear-gradient(135deg,rgba(91,44,111,0.16),rgba(216,129,102,0.18),rgba(42,125,83,0.14))] sm:h-52">
+            <div className="absolute inset-x-0 bottom-0 h-px bg-border/60" />
+          </div>
           <div className="px-5 pb-5 sm:px-7 sm:pb-7">
             <div className="-mt-12 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end">
@@ -375,6 +383,37 @@ function NotificationsPanel({ notifications, t }) {
       </div>
     </section>
   );
+}
+
+function resizeAvatarToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onerror = reject;
+    reader.onload = () => {
+      img.onload = () => {
+        const size = 512;
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("Canvas is unavailable."));
+          return;
+        }
+
+        const side = Math.min(img.width, img.height);
+        const sx = (img.width - side) / 2;
+        const sy = (img.height - side) / 2;
+        canvas.width = size;
+        canvas.height = size;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        resolve(canvas.toDataURL("image/webp", 0.82));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function formatCooldownRemaining(nextChangeDate, now) {
