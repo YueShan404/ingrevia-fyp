@@ -6,6 +6,7 @@ import { appApi } from "@/api/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useFavorites } from "@/lib/favorites";
 import { useI18n } from "@/lib/i18n";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ import {
 export default function Profile() {
   const { user, logout, checkUserAuth } = useAuth();
   const { t } = useI18n();
+  const { toast } = useToast();
   const { favorites } = useFavorites();
   const [scanHistory, setScanHistory] = useState([]);
   const [recipes, setRecipes] = useState([]);
@@ -93,9 +95,13 @@ export default function Profile() {
       try {
         const fallbackUrl = await resizeAvatarToDataUrl(file);
         setAvatarUrl(fallbackUrl);
-        alert(t("profile.image_ready_local"));
+        toast({ title: t("profile.image_ready_local") });
       } catch {
-        alert(`${t("profile.image_upload_failed")}: ${err.message || t("common.try_again")}`);
+        toast({
+          title: t("profile.image_upload_failed"),
+          description: err.message || t("common.try_again"),
+          variant: "destructive",
+        });
       }
     } finally {
       setSaving(false);
@@ -108,9 +114,13 @@ export default function Profile() {
       await appApi.profiles.updateOwnProfile({ full_name: name, avatar_url: avatarUrl });
       await checkUserAuth();
       setEditOpen(false);
-      alert(isAdmin ? t("profile.update_success_admin") : t("profile.update_success_user"));
+      toast({ title: isAdmin ? t("profile.update_success_admin") : t("profile.update_success_user") });
     } catch (err) {
-      alert(err.message || t("profile.update_failed"));
+      toast({
+        title: t("profile.update_failed"),
+        description: err.message || t("common.try_again"),
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }
@@ -130,11 +140,11 @@ export default function Profile() {
         return;
       }
       await navigator.clipboard?.writeText(profileUrl);
-      alert(t("profile.link_copied"));
+      toast({ title: t("profile.link_copied") });
     } catch (error) {
       if (error?.name !== "AbortError") {
         await navigator.clipboard?.writeText(profileUrl);
-        alert(t("profile.link_copied"));
+        toast({ title: t("profile.link_copied") });
       }
     }
   };

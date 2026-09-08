@@ -66,6 +66,42 @@ function averageNumber(items, field) {
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
 }
 
+const DAILY_VALUES = {
+  fat: 78,
+  saturated_fat: 20,
+  cholesterol: 300,
+  sodium: 2300,
+  carbs: 275,
+  fiber: 28,
+  protein: 50,
+  calcium: 1300,
+  iron: 18,
+  potassium: 4700,
+};
+
+const RECIPE_NUTRIENT_FIELDS = [
+  "calories",
+  "carbs",
+  "fiber",
+  "sugar",
+  "protein",
+  "fat",
+  "saturated_fat",
+  "cholesterol",
+  "sodium",
+  "calcium",
+  "iron",
+  "potassium",
+];
+
+function sumNumber(items, field) {
+  const values = items
+    .map((item) => item[field])
+    .filter((value) => typeof value === "number" && !Number.isNaN(value));
+
+  return values.length ? values.reduce((sum, value) => sum + value, 0) : null;
+}
+
 export function computeRecipeNutritionSummary(recipe, ingredients = []) {
   const linked = linkedIngredientsForRecipe(recipe, ingredients);
   if (!linked.length) return null;
@@ -78,6 +114,32 @@ export function computeRecipeNutritionSummary(recipe, ingredients = []) {
     fiber: averageNumber(linked, "fiber"),
     fat: averageNumber(linked, "fat"),
     sodium: averageNumber(linked, "sodium"),
+  };
+}
+
+export function computeRecipeNutritionFacts(recipe, ingredients = []) {
+  const linked = linkedIngredientsForRecipe(recipe, ingredients);
+  if (!linked.length) return null;
+
+  const baseServings = Math.max(1, Number(recipe?.servings) || 1);
+  const facts = {};
+
+  RECIPE_NUTRIENT_FIELDS.forEach((field) => {
+    const total = sumNumber(linked, field);
+    if (total == null) return;
+
+    const perServing = total / baseServings;
+    facts[field] = {
+      total,
+      perServing,
+      dailyValue: DAILY_VALUES[field] ? Math.round((perServing / DAILY_VALUES[field]) * 100) : null,
+    };
+  });
+
+  return {
+    servings: baseServings,
+    sourceCount: linked.length,
+    facts,
   };
 }
 

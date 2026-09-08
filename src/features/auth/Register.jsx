@@ -1,10 +1,17 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { appApi } from "@/api/supabaseClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserPlus, Mail, Lock, Loader2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { UserPlus, Mail, Lock, Loader2, Check } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
@@ -14,6 +21,7 @@ import { useI18n } from "@/lib/i18n";
 
 export default function Register() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { t } = useI18n();
   const searchParams = new URLSearchParams(location.search);
   const initialEmail = searchParams.get("email") || "";
@@ -24,6 +32,8 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [avoidIngredients, setAvoidIngredients] = useState([]);
   const authNotice = location.state?.authNotice;
   const returnTo = safeReturnTo();
   const destination = returnTo === "/" ? "/profile" : returnTo;
@@ -54,12 +64,28 @@ export default function Register() {
       if (result?.access_token) {
         appApi.auth.setToken(result.access_token);
       }
-      window.location.href = destination;
+      setShowOnboarding(true);
     } catch (err) {
       setError(err.message || t("auth.invalid_code"));
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleAvoidIngredient = (key) => {
+    setAvoidIngredients((items) =>
+      items.includes(key) ? items.filter((item) => item !== key) : [...items, key]
+    );
+  };
+
+  const finishOnboarding = () => {
+    const payload = {
+      avoidIngredients,
+      completedAt: new Date().toISOString(),
+    };
+    localStorage.setItem("ingrevia_onboarding_preferences", JSON.stringify(payload));
+    localStorage.setItem(`ingrevia_onboarding_preferences:${email.toLowerCase()}`, JSON.stringify(payload));
+    navigate(destination, { replace: true });
   };
 
   const handleResend = async () => {
@@ -129,6 +155,14 @@ export default function Register() {
             {t("auth.resend")}
           </button>
         </p>
+        <OnboardingDialog
+          avoidIngredients={avoidIngredients}
+          onFinish={finishOnboarding}
+          onSkip={finishOnboarding}
+          onToggle={toggleAvoidIngredient}
+          open={showOnboarding}
+          t={t}
+        />
       </AuthLayout>
     );
   }
@@ -242,5 +276,80 @@ export default function Register() {
         </Button>
       </form>
     </AuthLayout>
+  );
+}
+
+const AVOID_OPTIONS = [
+  { key: "alcohol", label: "Alcohol", emoji: "🍷" },
+  { key: "caffeine", label: "Caffeine", emoji: "☕" },
+  { key: "celery", label: "Celery", emoji: "🥬" },
+  { key: "crustacean", label: "Crustacean", emoji: "🦐" },
+  { key: "egg", label: "Egg", emoji: "🥚" },
+  { key: "fish", label: "Fish", emoji: "🐟" },
+  { key: "gluten", label: "Gluten", emoji: "🌾" },
+  { key: "groundnut", label: "Groundnut", emoji: "🥜" },
+  { key: "milk", label: "Milk", emoji: "🥛" },
+  { key: "mollusc", label: "Mollusc", emoji: "🦪" },
+  { key: "mustard", label: "Mustard", emoji: "🟡" },
+  { key: "sesame", label: "Sesame", emoji: "⚪" },
+  { key: "soybean", label: "Soybean", emoji: "🫘" },
+  { key: "sulphites", label: "Sulphites", emoji: "🍇" },
+  { key: "tree_nut", label: "Tree nut", emoji: "🌰" },
+  { key: "wheat", label: "Wheat", emoji: "🌾" },
+  { key: "lactose", label: "Lactose", emoji: "🥛" },
+  { key: "yeast", label: "Yeast", emoji: "🍞" },
+];
+
+function OnboardingDialog({ avoidIngredients, onFinish, onSkip, onToggle, open, t }) {
+  return (
+    <Dialog open={open}>
+      <DialogContent className="max-w-2xl rounded-3xl border-border/60 p-0">
+        <div className="p-6 sm:p-8">
+          <div className="mb-8 flex items-center justify-between gap-4">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
+              <div className="h-full w-1/2 rounded-full bg-primary" />
+            </div>
+            <button type="button" onClick={onSkip} className="text-sm font-bold text-primary hover:underline">
+              {t("common.skip")}
+            </button>
+          </div>
+          <DialogHeader className="text-center">
+            <DialogTitle className="font-heading text-2xl sm:text-3xl">
+              {t("onboarding.avoid_title")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("onboarding.avoid_subtitle")}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            {AVOID_OPTIONS.map((item) => {
+              const selected = avoidIngredients.includes(item.key);
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => onToggle(item.key)}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition ${
+                    selected
+                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                      : "border-border bg-secondary/70 text-foreground hover:bg-secondary"
+                  }`}
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-background text-base shadow-sm">
+                    {selected ? <Check className="h-4 w-4 text-primary" /> : item.emoji}
+                  </span>
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <Button type="button" onClick={onFinish} className="mt-8 h-12 w-full rounded-full font-bold">
+            {t("common.next")}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
