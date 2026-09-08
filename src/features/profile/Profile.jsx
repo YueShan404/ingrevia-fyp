@@ -212,16 +212,6 @@ export default function Profile() {
         <section className="mt-6 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
           <div className="space-y-6">
             <section className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
-              <h2 className="font-heading text-xl font-bold">{t("profile.public_profile")}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {isAdmin ? t("profile.public_desc_admin") : t("profile.public_desc_user")}
-              </p>
-              <p className={`mt-4 rounded-2xl border p-3 text-sm font-medium ${cooldown.locked ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
-                {cooldown.locked ? t("profile.edit_remaining").replace("{time}", remaining) : isAdmin ? t("profile.available_admin") : t("profile.available_user")}
-              </p>
-            </section>
-
-            <section className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
               <h2 className="font-heading text-xl font-bold">{t("profile.quick_tools")}</h2>
               <div className="mt-4 grid gap-3">
                 <QuickAction icon={ScanLine} title={t("profile.scan_title")} description={t("profile.scan_desc")} to="/scan" primary />
