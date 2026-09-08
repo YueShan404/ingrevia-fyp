@@ -116,12 +116,13 @@ const writeLocalScanHistory = (userId, rows) => {
 
 const createLocalScanHistory = (userId, values, synced = false) => {
   const row = {
+    ...values,
     id: `local-${crypto.randomUUID?.() || Date.now()}`,
+    remote_id: synced ? values.id : null,
     created_date: new Date().toISOString(),
     updated_date: new Date().toISOString(),
     user_id: userId,
     synced,
-    ...values,
   };
   writeLocalScanHistory(userId, [row, ...readLocalScanHistory(userId)]);
   return row;

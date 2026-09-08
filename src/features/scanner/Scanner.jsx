@@ -229,7 +229,7 @@ export default function Scanner() {
           : llmResult.ingredient_name || "",
         confidence,
         description: llmResult.description || "",
-        matchedIngredient: matchedIngredient || fallbackMatchedIngredient,
+        matchedIngredient,
         matched,
         image_url: file_url,
         fallback: Boolean(llmResult.fallback),
@@ -241,12 +241,12 @@ export default function Scanner() {
       setResult(scanResult);
 
       // Save to scan history for the current user.
-      const historyName = scanResult.matchedIngredient?.name || llmResult.ingredient_name || "Unmatched ingredient";
+      const historyName = scanResult.matchedIngredient?.name || llmResult.ingredient_name || t("scanner.not_matched");
       try {
         await appApi.scanHistory.create({
           ingredient_name: historyName,
           ingredient_id: scanResult.matched ? scanResult.matchedIngredient?.id || null : null,
-          image_url: file_url && !file_url.startsWith("data:") ? file_url : null,
+          image_url: file_url && !file_url.startsWith("data:") ? file_url : previewUrl,
           confidence,
           matched: scanResult.matched,
         });
