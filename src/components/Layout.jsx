@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/AuthContext";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "./LanguageSwitcher";
 import AccessibilityPanel from "./AccessibilityPanel";
-import { Menu, X, ScanLine, BookOpen, ChefHat, Home as HomeIcon, Heart, BarChart3, Users, CalendarDays, PenSquare, History, Shield, ChevronDown, UserCircle, HelpCircle } from "lucide-react";
+import { Menu, X, ScanLine, BookOpen, ChefHat, Home as HomeIcon, Heart, BarChart3, Users, CalendarDays, PenSquare, History, ChevronDown, UserCircle, HelpCircle } from "lucide-react";
 
 export default function Layout({ children }) {
   const { t, lang } = useI18n();
@@ -38,7 +38,6 @@ export default function Layout({ children }) {
     { to: "/kitchen", label: t("nav.kitchen"), icon: ChefHat },
     { to: "/community", label: t("nav.community"), icon: Users },
   ];
-  const isAdmin = user?.role === "admin";
   const secondaryLinks = [
     { to: "/favorites", label: t("nav.favorites"), icon: Heart },
     { to: "/planner", label: t("nav.planner"), icon: CalendarDays },
@@ -46,7 +45,6 @@ export default function Layout({ children }) {
     { to: "/history", label: t("nav.history"), icon: History },
     { to: "/dashboard", label: t("nav.dashboard"), icon: BarChart3 },
     { to: "/support", label: t("nav.support"), icon: HelpCircle },
-    ...(isAdmin ? [{ to: "/admin", label: t("nav.admin"), icon: Shield }] : []),
   ];
   const allLinks = [...primaryLinks, { to: "/scan", label: t("nav.scan"), icon: ScanLine }, ...secondaryLinks];
 
