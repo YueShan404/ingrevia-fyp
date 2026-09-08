@@ -9,8 +9,8 @@
   "theme_color": "#c4511f",
   "icons": [
     {
-      "src": "/ingrevia-logo-source.png",
-      "sizes": "1254x1254",
+      "src": "/ingrevia-site-icon.png",
+      "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }

@@ -1,15 +1,15 @@
 import React from "react";
 
 export function LogoIcon({ size = 40, className = "", rounded = true }) {
-  const r = rounded ? Math.round(size * 0.24) : 0;
+  const r = rounded ? Math.round(size / 2) : 0;
   return (
     <span
       style={{ width: size, height: size, borderRadius: r }}
-      className={`inline-flex items-center justify-center shrink-0 overflow-hidden bg-white shadow-sm ring-1 ring-black/5 ${className}`}
+      className={`inline-flex items-center justify-center shrink-0 overflow-hidden bg-white shadow-sm ring-1 ring-black/10 ${className}`}
       aria-label="Ingrevia logo"
       role="img"
     >
-      <img src="/ingrevia-mark-transparent.png" alt="" className="h-[88%] w-[88%] object-contain" />
+      <img src="/ingrevia-site-icon.png" alt="" className="h-full w-full object-contain" />
     </span>
   );
 }
