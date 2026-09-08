@@ -1,11 +1,18 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { appApi } from "@/api/supabaseClient";
 import { useI18n, localized } from "@/lib/i18n";
 import { useAuth } from "@/lib/AuthContext";
 import Layout from "@/components/Layout";
 import IngreviaLoader from "@/components/IngreviaLoader";
 import { useToast } from "@/components/ui/use-toast";
-import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages, UserX, ShieldCheck, MessageSquareWarning } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages, UserX, ShieldCheck, MessageSquareWarning, Search, Eye, Pencil, Save } from "lucide-react";
 
 export default function Admin() {
   const { t, lang } = useI18n();
@@ -23,6 +30,14 @@ export default function Admin() {
   const [translatingRecipeId, setTranslatingRecipeId] = useState(null);
   const [bulkTranslating, setBulkTranslating] = useState(false);
   const [bulkTranslateProgress, setBulkTranslateProgress] = useState({ done: 0, total: 0 });
+  const [search, setSearch] = useState("");
+  const [detailItem, setDetailItem] = useState(null);
+  const [detailType, setDetailType] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
+  const [savingItem, setSavingItem] = useState(false);
+
+  const filteredIngredients = useMemo(() => filterAdminItems(ingredients, search, ["name", "name_bm", "name_zh", "name_ta", "category"]), [ingredients, search]);
+  const filteredRecipes = useMemo(() => filterAdminItems(recipes, search, ["title", "title_bm", "title_zh", "title_ta", "cuisine", "description"]), [recipes, search]);
 
   const loadAll = () => {
     Promise.all([
@@ -42,6 +57,7 @@ export default function Admin() {
   };
 
   useEffect(() => { loadAll(); }, []);
+  useEffect(() => { setSearch(""); }, [tab]);
 
   const handleBulkUpload = async (file) => {
     if (!file) return;
@@ -76,6 +92,40 @@ export default function Admin() {
     if (!confirm(t("admin.confirm_delete"))) return;
     await appApi.entities.Recipe.delete(id);
     loadAll();
+  };
+
+  const openDetails = (type, item) => {
+    setDetailType(type);
+    setDetailItem(item);
+    setEditingItem(null);
+  };
+
+  const startEdit = (type, item) => {
+    setDetailType(type);
+    setDetailItem(item);
+    setEditingItem(createEditDraft(type, item));
+  };
+
+  const saveEdit = async () => {
+    if (!editingItem || !detailType || !detailItem) return;
+    setSavingItem(true);
+    try {
+      const api = detailType === "ingredient" ? appApi.entities.Ingredient : appApi.entities.Recipe;
+      await api.update(detailItem.id, normalizeEditDraft(detailType, editingItem));
+      toast({ title: t("admin.edit_saved") });
+      setEditingItem(null);
+      setDetailItem(null);
+      setDetailType(null);
+      loadAll();
+    } catch (err) {
+      toast({
+        title: t("admin.edit_failed"),
+        description: err?.message || t("common.try_again"),
+        variant: "destructive",
+      });
+    } finally {
+      setSavingItem(false);
+    }
   };
 
   const recipeHasMissingTranslations = (recipe) => {
@@ -246,6 +296,21 @@ export default function Admin() {
           })}
         </div>
 
+        {["ingredients", "recipes"].includes(tab) && (
+          <div className="mx-auto mb-5 max-w-2xl">
+            <label className="relative block">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={tab === "ingredients" ? t("admin.search_ingredients") : t("admin.search_recipes")}
+                className="h-12 w-full rounded-full border border-border bg-card pl-11 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </label>
+          </div>
+        )}
+
         {loading ? (
           <IngreviaLoader compact message={t("loading.admin")} />
         ) : tab === "ingredients" ? (
@@ -262,7 +327,7 @@ export default function Admin() {
               </button>
               <p className="text-xs text-muted-foreground max-w-md text-right">{t("admin.bulk_import_hint")}</p>
             </div>
-            <AdminList items={ingredients} onDelete={deleteIngredient}
+            <AdminList items={filteredIngredients} onDelete={deleteIngredient} onDetails={(item) => openDetails("ingredient", item)} onEdit={(item) => startEdit("ingredient", item)}
               render={(item) => ({
                 title: localized(item, "name", lang),
                 subtitle: t(`encyclopedia.categories.${item.category}`),
@@ -284,7 +349,7 @@ export default function Admin() {
               </button>
               <p className="max-w-md text-right text-xs text-muted-foreground">{t("admin.translate_all_hint")}</p>
             </div>
-            <AdminList items={recipes} onDelete={deleteRecipe}
+            <AdminList items={filteredRecipes} onDelete={deleteRecipe} onDetails={(item) => openDetails("recipe", item)} onEdit={(item) => startEdit("recipe", item)}
               render={(item) => ({
                 title: localized(item, "title", lang),
                 subtitle: t(`kitchen.cuisines.${item.cuisine}`),
@@ -420,12 +485,23 @@ export default function Admin() {
             ))}
           </div>
         )}
+        <AdminDetailDialog
+          detailItem={detailItem}
+          detailType={detailType}
+          editingItem={editingItem}
+          onClose={() => { setDetailItem(null); setDetailType(null); setEditingItem(null); }}
+          onEdit={() => startEdit(detailType, detailItem)}
+          onSave={saveEdit}
+          saving={savingItem}
+          setEditingItem={setEditingItem}
+          t={t}
+        />
       </div>
     </Layout>
   );
 }
 
-function AdminList({ items, onDelete, render, t }) {
+function AdminList({ items, onDelete, onDetails, onEdit, render, t }) {
   return (
     <div className="space-y-3">
       {items.length === 0 ? (
@@ -439,6 +515,12 @@ function AdminList({ items, onDelete, render, t }) {
               <p className="font-semibold text-sm truncate">{r.title}</p>
               <p className="text-xs text-muted-foreground">{r.subtitle}</p>
             </div>
+            <button onClick={() => onDetails(item)} className="shrink-0 p-2 rounded-full bg-secondary text-foreground hover:scale-110 transition-transform" aria-label={t("common.view")} title={t("common.view")}>
+              <Eye className="w-4 h-4" />
+            </button>
+            <button onClick={() => onEdit(item)} className="shrink-0 p-2 rounded-full bg-secondary text-primary hover:scale-110 transition-transform" aria-label={t("admin.edit")} title={t("admin.edit")}>
+              <Pencil className="w-4 h-4" />
+            </button>
             <button onClick={() => onDelete(item.id)} className="shrink-0 p-2 rounded-full bg-red-50 dark:bg-red-950/30 text-red-600 hover:scale-110 transition-transform">
               <Trash2 className="w-4 h-4" />
             </button>
@@ -447,5 +529,119 @@ function AdminList({ items, onDelete, render, t }) {
         );
       })}
     </div>
+  );
+}
+
+function filterAdminItems(items, query, fields) {
+  const q = query.trim().toLowerCase();
+  if (!q) return items;
+  return items.filter((item) =>
+    fields.some((field) => String(item[field] || "").toLowerCase().includes(q)) ||
+    JSON.stringify(item.ingredient_tags || []).toLowerCase().includes(q)
+  );
+}
+
+function createEditDraft(type, item) {
+  if (type === "ingredient") {
+    return {
+      name: item.name || "",
+      category: item.category || "",
+      image_url: item.image_url || "",
+      calories: item.calories ?? "",
+      protein: item.protein ?? "",
+      carbs: item.carbs ?? "",
+      fiber: item.fiber ?? "",
+      fat: item.fat ?? "",
+      sodium: item.sodium ?? "",
+    };
+  }
+
+  return {
+    title: item.title || "",
+    cuisine: item.cuisine || "",
+    image_url: item.image_url || "",
+    description: item.description || "",
+    prep_time: item.prep_time ?? "",
+    cook_time: item.cook_time ?? "",
+    servings: item.servings ?? "",
+    ingredient_tags: Array.isArray(item.ingredient_tags) ? item.ingredient_tags.join(", ") : "",
+  };
+}
+
+function normalizeEditDraft(type, draft) {
+  const numberOrNull = (value) => value === "" || value == null ? null : Number(value);
+
+  if (type === "ingredient") {
+    return {
+      ...draft,
+      calories: numberOrNull(draft.calories),
+      protein: numberOrNull(draft.protein),
+      carbs: numberOrNull(draft.carbs),
+      fiber: numberOrNull(draft.fiber),
+      fat: numberOrNull(draft.fat),
+      sodium: numberOrNull(draft.sodium),
+    };
+  }
+
+  return {
+    ...draft,
+    prep_time: numberOrNull(draft.prep_time),
+    cook_time: numberOrNull(draft.cook_time),
+    servings: numberOrNull(draft.servings),
+    ingredient_tags: draft.ingredient_tags.split(",").map((tag) => tag.trim()).filter(Boolean),
+  };
+}
+
+function AdminDetailDialog({ detailItem, detailType, editingItem, onClose, onEdit, onSave, saving, setEditingItem, t }) {
+  if (!detailItem || !detailType) return null;
+  const isEditing = Boolean(editingItem);
+  const fields = detailType === "ingredient"
+    ? ["name", "category", "image_url", "calories", "protein", "carbs", "fiber", "fat", "sodium"]
+    : ["title", "cuisine", "image_url", "description", "prep_time", "cook_time", "servings", "ingredient_tags"];
+
+  return (
+    <Dialog open={Boolean(detailItem)} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto rounded-3xl">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? t("admin.edit") : t("admin.details")}</DialogTitle>
+          <DialogDescription>{detailType === "ingredient" ? t("admin.ingredient_record") : t("admin.recipe_record")}</DialogDescription>
+        </DialogHeader>
+
+        {detailItem.image_url && (
+          <img src={detailItem.image_url} alt="" className="h-48 w-full rounded-2xl object-cover" />
+        )}
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {fields.map((field) => (
+            <label key={field} className={field === "description" || field === "image_url" || field === "ingredient_tags" ? "sm:col-span-2" : ""}>
+              <span className="text-xs font-bold uppercase text-muted-foreground">{field.replaceAll("_", " ")}</span>
+              {isEditing ? (
+                field === "description" ? (
+                  <textarea value={editingItem[field] || ""} onChange={(event) => setEditingItem({ ...editingItem, [field]: event.target.value })} className="mt-1 min-h-24 w-full rounded-2xl border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+                ) : (
+                  <input value={editingItem[field] ?? ""} onChange={(event) => setEditingItem({ ...editingItem, [field]: event.target.value })} className="mt-1 h-10 w-full rounded-full border border-border bg-background px-3 text-sm outline-none focus:border-primary" />
+                )
+              ) : (
+                <p className="mt-1 rounded-2xl bg-secondary/60 px-3 py-2 text-sm text-foreground">
+                  {Array.isArray(detailItem[field]) ? detailItem[field].join(", ") : String(detailItem[field] ?? "-")}
+                </p>
+              )}
+            </label>
+          ))}
+        </div>
+
+        <div className="flex justify-end gap-2">
+          {isEditing ? (
+            <button onClick={onSave} disabled={saving} className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60">
+              <Save className="h-4 w-4" /> {saving ? t("admin.saving") : t("admin.save_changes")}
+            </button>
+          ) : (
+            <button onClick={onEdit} className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+              <Pencil className="h-4 w-4" /> {t("admin.edit")}
+            </button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
