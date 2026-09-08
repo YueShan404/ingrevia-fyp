@@ -9,10 +9,12 @@ import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
 import { useAuth } from "@/lib/AuthContext";
+import { useI18n } from "@/lib/i18n";
 
 export default function Login() {
   const navigate = useNavigate();
   const { checkUserAuth } = useAuth();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -40,7 +42,7 @@ export default function Login() {
       navigate(registerUrl, {
         replace: true,
         state: {
-          authNotice: "Please register or verify your email before logging in.",
+          authNotice: t("auth.notice_register_verify"),
         },
       });
     } finally {
@@ -55,16 +57,16 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
+      title={t("auth.login_title")}
+      subtitle={t("auth.login_subtitle")}
       footer={
         <>
-          Don't have an account?{" "}
+          {t("auth.no_account")}{" "}
           <Link
             to={"/register" + (destination !== "/" ? "?returnTo=" + encodeURIComponent(destination) : "")}
             className="text-primary font-medium hover:underline"
           >
-            Create one
+            {t("auth.create_one")}
           </Link>
         </>
       }
@@ -75,7 +77,7 @@ export default function Login() {
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
+        {t("auth.continue_google")}
       </Button>
 
       <div className="relative mb-6">
@@ -83,7 +85,7 @@ export default function Login() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+          <span className="bg-card px-3 text-muted-foreground">{t("common.or")}</span>
         </div>
       </div>
 
@@ -95,13 +97,13 @@ export default function Login() {
 
       {authError === "oauth_expired" && !error && (
         <div className="mb-4 p-3 rounded-lg bg-amber-50 text-amber-800 text-sm">
-          Google login expired. Please enter Ingrevia again.
+          {t("auth.google_expired")}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -119,9 +121,9 @@ export default function Login() {
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
+              {t("auth.forgot_password")}
             </Link>
           </div>
           <div className="relative">
@@ -142,10 +144,10 @@ export default function Login() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
+              {t("auth.logging_in")}
             </>
           ) : (
-            "Log in"
+            t("auth.login")
           )}
         </Button>
       </form>

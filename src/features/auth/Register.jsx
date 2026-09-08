@@ -10,9 +10,11 @@ import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { useI18n } from "@/lib/i18n";
 
 export default function Register() {
   const location = useLocation();
+  const { t } = useI18n();
   const searchParams = new URLSearchParams(location.search);
   const initialEmail = searchParams.get("email") || "";
   const [email, setEmail] = useState(initialEmail);
@@ -30,7 +32,7 @@ export default function Register() {
     e.preventDefault();
     setError("");
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("auth.passwords_no_match"));
       return;
     }
     setLoading(true);
@@ -38,7 +40,7 @@ export default function Register() {
       await appApi.auth.register({ email, password });
       setShowOtp(true);
     } catch (err) {
-      setError(err.message || "Registration failed");
+      setError(err.message || t("auth.registration_failed"));
     } finally {
       setLoading(false);
     }
@@ -54,7 +56,7 @@ export default function Register() {
       }
       window.location.href = destination;
     } catch (err) {
-      setError(err.message || "Invalid verification code");
+      setError(err.message || t("auth.invalid_code"));
     } finally {
       setLoading(false);
     }
@@ -65,11 +67,11 @@ export default function Register() {
     try {
       await appApi.auth.resendOtp(email);
       toast({
-        title: "Code sent",
-        description: "Check your email for the new code.",
+        title: t("auth.code_sent"),
+        description: t("auth.code_sent_body"),
       });
     } catch (err) {
-      setError(err.message || "Failed to resend code");
+      setError(err.message || t("auth.resend_failed"));
     }
   };
 
@@ -81,8 +83,8 @@ export default function Register() {
     return (
       <AuthLayout
         icon={Mail}
-        title="Verify your email"
-        subtitle={`We sent a 6-digit OTP to ${email}`}
+        title={t("auth.verify_title")}
+        subtitle={t("auth.verify_subtitle").replace("{email}", email)}
       >
         {error && (
           <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
@@ -115,16 +117,16 @@ export default function Register() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Verifying...
+              {t("auth.verifying")}
             </>
           ) : (
-            "Verify"
+            t("auth.verify")
           )}
         </Button>
         <p className="text-center text-sm text-muted-foreground mt-4">
-          Didn't receive the code?{" "}
+          {t("auth.no_code")}{" "}
           <button onClick={handleResend} className="text-primary font-medium hover:underline">
-            Resend
+            {t("auth.resend")}
           </button>
         </p>
       </AuthLayout>
@@ -134,16 +136,16 @@ export default function Register() {
   return (
     <AuthLayout
       icon={UserPlus}
-      title="Create your account"
-      subtitle="Sign up to get started"
+      title={t("auth.register_title")}
+      subtitle={t("auth.register_subtitle")}
       footer={
         <>
-          Already have an account?{" "}
+          {t("auth.have_account")}{" "}
           <Link
             to={"/login" + (destination !== "/" ? "?returnTo=" + encodeURIComponent(destination) : "")}
             className="text-primary font-medium hover:underline"
           >
-            Log in
+            {t("auth.login")}
           </Link>
         </>
       }
@@ -154,7 +156,7 @@ export default function Register() {
         onClick={handleGoogle}
       >
         <GoogleIcon className="w-5 h-5 mr-2" />
-        Enter Ingrevia with Google
+        {t("auth.enter_google")}
       </Button>
 
       <div className="relative mb-6">
@@ -162,7 +164,7 @@ export default function Register() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+          <span className="bg-card px-3 text-muted-foreground">{t("common.or")}</span>
         </div>
       </div>
 
@@ -180,7 +182,7 @@ export default function Register() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -197,7 +199,7 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t("auth.password")}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -213,7 +215,7 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
+          <Label htmlFor="confirm">{t("auth.confirm_password")}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -232,10 +234,10 @@ export default function Register() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating account...
+              {t("auth.creating_account")}
             </>
           ) : (
-            "Create account"
+            t("auth.create_account")
           )}
         </Button>
       </form>
