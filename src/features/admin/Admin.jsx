@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages, UserX, ShieldCheck, MessageSquareWarning, Search, Eye, Pencil, Save } from "lucide-react";
+import { BADGES, badgeImage } from "@/lib/achievements";
 
 export default function Admin() {
   const { t, lang } = useI18n();
@@ -253,6 +254,7 @@ export default function Admin() {
     { key: "community", label: t("admin.tab_community"), icon: Users, count: community.filter((c) => c.status === "pending").length },
     { key: "users", label: t("admin.tab_users"), icon: ShieldCheck, count: profiles.filter((p) => p.status === "blocked").length },
     { key: "feedback", label: t("admin.tab_feedback"), icon: MessageSquareWarning, count: feedback.filter((item) => item.status === "open").length },
+    { key: "badges", label: t("admin.tab_badges"), icon: Shield, count: BADGES.length },
   ];
 
   if (user?.role !== "admin") {
@@ -296,7 +298,7 @@ export default function Admin() {
           })}
         </div>
 
-        {["ingredients", "recipes"].includes(tab) && (
+        {["ingredients", "recipes", "badges"].includes(tab) && (
           <div className="mx-auto mb-5 max-w-2xl">
             <label className="relative block">
               <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -304,7 +306,7 @@ export default function Admin() {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder={tab === "ingredients" ? t("admin.search_ingredients") : t("admin.search_recipes")}
+                placeholder={tab === "ingredients" ? t("admin.search_ingredients") : tab === "recipes" ? t("admin.search_recipes") : t("admin.search_badges")}
                 className="h-12 w-full rounded-full border border-border bg-card pl-11 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </label>
@@ -446,6 +448,8 @@ export default function Admin() {
               </div>
             ))}
           </div>
+        ) : tab === "badges" ? (
+          <AdminBadgeList badges={filterAdminItems(BADGES, search, ["name", "description", "requirement", "rarity"])} t={t} />
         ) : (
           <div className="space-y-3">
             {feedback.length === 0 ? (
@@ -538,6 +542,31 @@ function filterAdminItems(items, query, fields) {
   return items.filter((item) =>
     fields.some((field) => String(item[field] || "").toLowerCase().includes(q)) ||
     JSON.stringify(item.ingredient_tags || []).toLowerCase().includes(q)
+  );
+}
+
+function AdminBadgeList({ badges, t }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      {badges.length === 0 ? (
+        <p className="text-center text-muted-foreground py-12 sm:col-span-2">{t("common.no_results")}</p>
+      ) : badges.map((badge) => (
+        <article key={badge.id} className="glass-card rounded-2xl border border-border/50 p-4">
+          <div className="flex items-start gap-4">
+            <img src={badgeImage(badge.id)} alt={badge.name} className="h-16 w-16 shrink-0 object-contain" />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="font-heading text-base font-bold">{badge.name}</h3>
+                <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase text-primary">{badge.rarity}</span>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">{badge.description}</p>
+              <p className="mt-2 text-xs font-semibold text-foreground">{badge.requirement}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("admin.badge_metric")}: {badge.metric} / {badge.target}</p>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
   );
 }
 

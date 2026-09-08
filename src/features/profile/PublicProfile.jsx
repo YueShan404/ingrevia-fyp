@@ -3,9 +3,11 @@ import { Link, useParams } from "react-router-dom";
 import Layout from "@/components/Layout";
 import IngreviaLoader from "@/components/IngreviaLoader";
 import CommunityRecipeCard from "@/components/CommunityRecipeCard";
+import AchievementBadges from "@/components/AchievementBadges";
 import { appApi } from "@/api/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useI18n } from "@/lib/i18n";
+import { buildAchievementStats, computeBadges } from "@/lib/achievements";
 import { ArrowLeft, Copy, UserCheck, UserPlus } from "lucide-react";
 
 export default function PublicProfile() {
@@ -43,6 +45,9 @@ export default function PublicProfile() {
   );
   const canFollow = profile?.id && profile.id !== user?.id;
   const profileUrl = `${window.location.origin}/u/${publicUserId}`;
+  const publicBadges = computeBadges(buildAchievementStats({
+    communityRecipes: userRecipes,
+  })).filter((badge) => badge.unlocked);
 
   if (loading) {
     return (
@@ -116,6 +121,10 @@ export default function PublicProfile() {
               )}
             </div>
           </div>
+        </section>
+
+        <section className="mt-6">
+          <AchievementBadges badges={publicBadges} limit={3} publicView t={t} />
         </section>
 
         <section className="mt-6 space-y-4">

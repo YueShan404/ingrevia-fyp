@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Layout from "@/components/Layout";
 import IngreviaLoader from "@/components/IngreviaLoader";
+import AchievementBadges from "@/components/AchievementBadges";
 import { appApi } from "@/api/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { useFavorites } from "@/lib/favorites";
+import { buildAchievementStats, computeBadges } from "@/lib/achievements";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/components/ui/use-toast";
 import {
@@ -38,6 +40,7 @@ export default function Profile() {
   const { favorites } = useFavorites();
   const [scanHistory, setScanHistory] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [communityRecipes, setCommunityRecipes] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [name, setName] = useState(user?.full_name || "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || "");
@@ -52,14 +55,16 @@ export default function Profile() {
     Promise.all([
       appApi.scanHistory.listRecent(30, 5).catch(() => []),
       appApi.entities.Recipe.list().catch(() => []),
+      appApi.entities.CommunityRecipe.list("-created_date", 200).catch(() => []),
       appApi.social.listNotifications(5).catch(() => []),
-    ]).then(([history, recipeRows, notificationRows]) => {
+    ]).then(([history, recipeRows, communityRows, notificationRows]) => {
       setScanHistory(history || []);
       setRecipes(recipeRows || []);
+      setCommunityRecipes((communityRows || []).filter((recipe) => recipe.user_id === user?.id));
       setNotifications(notificationRows || []);
       setLoading(false);
     });
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     setName(user?.full_name || "");
@@ -81,6 +86,13 @@ export default function Profile() {
     .join("") || "I";
   const savedCount = recipes.filter((recipe) => favorites.includes(recipe.id)).length;
   const roleLabel = user?.role === "admin" ? "Admin" : "User";
+  const completedRecipes = readCompletedRecipeIds();
+  const badges = computeBadges(buildAchievementStats({
+    scanHistory,
+    favorites,
+    completedRecipes,
+    communityRecipes,
+  }));
   const isAdmin = user?.role === "admin";
   const remaining = formatCooldownRemaining(cooldown.nextChangeDate, now);
   const profileUrl = user?.public_user_id ? `${window.location.origin}/u/${user.public_user_id}` : "";
@@ -242,6 +254,8 @@ export default function Profile() {
             )}
 
             {(activeTab === "overview" || activeTab === "activity") && <ActivityPanel loading={loading} scanHistory={scanHistory} t={t} />}
+
+            {activeTab === "overview" && <AchievementBadges badges={badges} limit={3} t={t} />}
 
             {activeTab === "saved" && (
               <section className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
@@ -434,6 +448,14 @@ function formatCooldownRemaining(nextChangeDate, now) {
   if (days > 0) return `${days} day${days === 1 ? "" : "s"} ${hours} hour${hours === 1 ? "" : "s"}`;
   if (hours > 0) return `${hours} hour${hours === 1 ? "" : "s"} ${minutes} minute${minutes === 1 ? "" : "s"}`;
   return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+}
+
+function readCompletedRecipeIds() {
+  try {
+    return JSON.parse(localStorage.getItem("ingrevia_zerowaste_applied")) || [];
+  } catch {
+    return [];
+  }
 }
 
 function ProfileStat({ icon: Icon, label, value }) {
