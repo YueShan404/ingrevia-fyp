@@ -282,6 +282,7 @@ export const appApi = {
       const role = isAdminEmail(user.email) ? "admin" : profile.role || user.user_metadata?.role || "user";
 
       return {
+        ...user.user_metadata,
         id: user.id,
         email: user.email,
         status: profile.status,
@@ -289,7 +290,6 @@ export const appApi = {
         avatar_url: profile.avatar_url,
         public_user_id: profile.public_user_id,
         profile_updated_at: profile.profile_updated_at,
-        ...user.user_metadata,
         role,
       };
     },
