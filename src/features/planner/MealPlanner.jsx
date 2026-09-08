@@ -4,7 +4,7 @@ import { useI18n, localized } from "@/lib/i18n";
 import { useFavorites } from "@/lib/favorites";
 import Layout from "@/components/Layout";
 import IngreviaLoader from "@/components/IngreviaLoader";
-import { CalendarDays, Trash2, ChefHat, GripVertical } from "lucide-react";
+import { CalendarDays, Trash2, ChefHat, GripVertical, Plus } from "lucide-react";
 
 const PLAN_KEY = "ingrevia_meal_plan";
 
@@ -37,6 +37,11 @@ export default function MealPlanner() {
       setPlan({ ...plan, [day]: dragRecipe });
       setDragRecipe(null);
     }
+  };
+
+  const addRecipeToDay = (recipeId, day) => {
+    if (day === "") return;
+    setPlan({ ...plan, [day]: recipeId });
   };
 
   const clearDay = (day) => {
@@ -77,10 +82,24 @@ export default function MealPlanner() {
                   <div key={r.id} draggable
                     onDragStart={() => setDragRecipe(r.id)}
                     onDragEnd={() => setDragRecipe(null)}
-                    className="flex items-center gap-2 p-2.5 rounded-xl bg-secondary hover:bg-secondary/70 cursor-grab active:cursor-grabbing transition-colors">
-                    <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
-                    {r.image_url && <img src={r.image_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />}
-                    <span className="text-xs font-medium truncate flex-1">{localized(r, "title", lang)}</span>
+                    className="rounded-xl bg-secondary p-2.5 transition-colors hover:bg-secondary/70">
+                    <div className="flex cursor-grab items-center gap-2 active:cursor-grabbing">
+                      <GripVertical className="w-4 h-4 text-muted-foreground shrink-0" />
+                      {r.image_url && <img src={r.image_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />}
+                      <span className="text-xs font-medium truncate flex-1">{localized(r, "title", lang)}</span>
+                    </div>
+                    <label className="mt-2 flex items-center gap-2 rounded-full bg-background px-2 py-1.5">
+                      <Plus className="h-3.5 w-3.5 text-primary" />
+                      <select
+                        value=""
+                        onChange={(event) => addRecipeToDay(r.id, event.target.value)}
+                        className="min-w-0 flex-1 bg-transparent text-xs font-semibold outline-none"
+                        aria-label={t("planner.add_to_day")}
+                      >
+                        <option value="">{t("planner.add_to_day")}</option>
+                        {days.map((day, index) => <option key={day} value={index}>{day}</option>)}
+                      </select>
+                    </label>
                   </div>
                 ))}
               </div>
