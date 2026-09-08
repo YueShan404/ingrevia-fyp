@@ -15,12 +15,14 @@ import {
 } from "@/components/ui/dialog";
 import {
   BarChart3,
+  Bell,
   CalendarDays,
   ChefHat,
   Edit3,
   HelpCircle,
   History,
   Loader2,
+  LogOut,
   ScanLine,
   Share2,
   Shield,
@@ -40,6 +42,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const [now, setNow] = useState(() => Date.now());
   const cooldown = appApi.profiles.getCooldown(user);
 
@@ -134,225 +137,243 @@ export default function Profile() {
     <Layout>
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         <section className="overflow-hidden rounded-[28px] border border-border/60 bg-card shadow-sm">
-          <div className="relative grid gap-6 overflow-hidden p-5 sm:p-7 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
-            <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(120deg,rgba(99,54,180,0.12),rgba(214,61,140,0.09),rgba(255,134,31,0.14))]" />
-            <div className="relative flex min-w-0 flex-col gap-5 sm:flex-row sm:items-center">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="h-20 w-20 shrink-0 rounded-[24px] object-cover shadow-lg shadow-primary/20 ring-4 ring-background" />
-              ) : (
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[24px] brand-gradient text-2xl font-black text-white shadow-lg shadow-primary/20 ring-4 ring-background">
-                  {initials}
-                </div>
-              )}
-              <div className="min-w-0">
-                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-background/80 px-3 py-1 text-xs font-bold text-primary">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  {t("profile.account")}
-                </div>
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <h1 className="min-w-0 truncate font-heading text-3xl font-extrabold text-foreground sm:text-4xl">{displayName}</h1>
-                  <button
-                    type="button"
-                    onClick={() => setEditOpen(true)}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
-                    aria-label={t("profile.edit_public")}
-                    title={t("profile.edit_public")}
-                  >
-                    <Edit3 className="h-4 w-4" />
-                  </button>
-                  {profileUrl && (
-                    <button
-                      type="button"
-                      onClick={shareProfile}
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background/90 text-foreground shadow-sm hover:bg-secondary/70"
-                      aria-label={t("profile.share_public")}
-                      title={t("profile.share_public")}
-                    >
-                      <Share2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-                <p className="mt-1 truncate text-sm font-medium text-muted-foreground">{user?.email}</p>
-                {user?.public_user_id && (
-                  <p className="mt-1 truncate text-xs font-bold text-primary">@{user.public_user_id}</p>
+          <div className="h-40 bg-[linear-gradient(135deg,rgba(91,44,111,0.20),rgba(216,129,102,0.20),rgba(42,125,83,0.16)),url('/ingrevia-logo-transparent.png')] bg-[length:240px_auto] bg-[position:right_2rem_center] bg-no-repeat sm:h-52" />
+          <div className="px-5 pb-5 sm:px-7 sm:pb-7">
+            <div className="-mt-12 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-end">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt={displayName} className="h-28 w-28 shrink-0 rounded-[30px] object-cover shadow-lg shadow-primary/15 ring-4 ring-card" />
+                ) : (
+                  <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-[30px] brand-gradient text-4xl font-black text-white shadow-lg shadow-primary/15 ring-4 ring-card">
+                    {initials}
+                  </div>
                 )}
+                <div className="min-w-0 pb-1">
+                  <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-background/90 px-3 py-1 text-xs font-bold text-primary shadow-sm">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    {t("profile.account")}
+                  </div>
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    <h1 className="min-w-0 truncate font-heading text-3xl font-extrabold text-foreground sm:text-4xl">{displayName}</h1>
+                    <button type="button" onClick={() => setEditOpen(true)} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90" aria-label={t("profile.edit_public")} title={t("profile.edit_public")}>
+                      <Edit3 className="h-4 w-4" />
+                    </button>
+                    {profileUrl && (
+                      <button type="button" onClick={shareProfile} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm hover:bg-secondary/70" aria-label={t("profile.share_public")} title={t("profile.share_public")}>
+                        <Share2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="mt-1 truncate text-sm font-medium text-muted-foreground">{user?.email}</p>
+                  {user?.public_user_id && <p className="mt-1 truncate text-xs font-bold text-primary">@{user.public_user_id}</p>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 sm:min-w-[420px] sm:gap-3">
+                <ProfileStat label={t("profile.recent_scans")} value={scanHistory.length} icon={History} />
+                <ProfileStat label={t("profile.saved_recipes")} value={savedCount} icon={ChefHat} />
+                <ProfileStat label={t("profile.account_role")} value={roleLabel} icon={Shield} />
               </div>
             </div>
 
-            <div className="relative grid grid-cols-3 gap-2 sm:gap-3">
-              <ProfileStat label={t("profile.recent_scans")} value={scanHistory.length} icon={History} />
-              <ProfileStat label={t("profile.saved_recipes")} value={savedCount} icon={ChefHat} />
-              <ProfileStat label={t("profile.account_role")} value={roleLabel} icon={Shield} />
+            <div className="mt-6 flex gap-2 overflow-x-auto rounded-2xl bg-secondary/60 p-1">
+              <ProfileTab active={activeTab === "overview"} icon={Sparkles} label={t("profile.tab_overview")} onClick={() => setActiveTab("overview")} />
+              <ProfileTab active={activeTab === "activity"} icon={History} label={t("profile.tab_activity")} onClick={() => setActiveTab("activity")} />
+              <ProfileTab active={activeTab === "saved"} icon={ChefHat} label={t("profile.tab_saved")} onClick={() => setActiveTab("saved")} />
+              <ProfileTab active={activeTab === "support"} icon={HelpCircle} label={t("nav.support")} onClick={() => setActiveTab("support")} />
             </div>
           </div>
         </section>
 
-        <section className="mt-6 rounded-[28px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
-          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+        <ProfileEditDialog
+          avatarUrl={avatarUrl}
+          cooldown={cooldown}
+          displayName={displayName}
+          editOpen={editOpen}
+          handleAvatar={handleAvatar}
+          isAdmin={isAdmin}
+          name={name}
+          remaining={remaining}
+          saveProfile={saveProfile}
+          saving={saving}
+          setEditOpen={setEditOpen}
+          setName={setName}
+          t={t}
+        />
+
+        <section className="mt-6 grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
+          <div className="space-y-6">
+            <section className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
               <h2 className="font-heading text-xl font-bold">{t("profile.public_profile")}</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 {isAdmin ? t("profile.public_desc_admin") : t("profile.public_desc_user")}
               </p>
-            </div>
-            {profileUrl && (
-              <button
-                type="button"
-                onClick={shareProfile}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-bold text-foreground hover:bg-secondary/60"
-              >
-                <Share2 className="h-4 w-4" /> {t("profile.share_profile")}
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center gap-4">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt="" className="h-20 w-20 shrink-0 rounded-3xl object-cover" />
-            ) : (
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-secondary text-xl font-black text-primary">
-                {initials}
-              </div>
-            )}
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-muted-foreground">{t("profile.display_name")}</p>
-              <p className="truncate font-heading text-2xl font-extrabold text-foreground">{displayName}</p>
-              <p className={`mt-2 text-sm font-medium ${cooldown.locked ? "text-amber-700" : "text-emerald-700"}`}>
-                {cooldown.locked
-                  ? t("profile.edit_remaining").replace("{time}", remaining)
-                  : isAdmin
-                    ? t("profile.available_admin")
-                    : t("profile.available_user")}
+              <p className={`mt-4 rounded-2xl border p-3 text-sm font-medium ${cooldown.locked ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}`}>
+                {cooldown.locked ? t("profile.edit_remaining").replace("{time}", remaining) : isAdmin ? t("profile.available_admin") : t("profile.available_user")}
               </p>
-            </div>
+            </section>
+
+            <section className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+              <h2 className="font-heading text-xl font-bold">{t("profile.quick_tools")}</h2>
+              <div className="mt-4 grid gap-3">
+                <QuickAction icon={ScanLine} title={t("profile.scan_title")} description={t("profile.scan_desc")} to="/scan" primary />
+                <QuickAction icon={CalendarDays} title={t("profile.planner_title")} description={t("profile.planner_desc")} to="/planner" />
+                {user?.role === "admin" && <QuickAction icon={Shield} title={t("profile.admin_title")} description={t("profile.admin_desc")} to="/admin" />}
+              </div>
+            </section>
           </div>
 
-          <Dialog open={editOpen} onOpenChange={setEditOpen}>
-            <DialogContent className="max-w-md rounded-3xl">
-              <DialogHeader>
-                <DialogTitle>{t("profile.edit_public")}</DialogTitle>
-                <DialogDescription>
-                  {cooldown.locked
-                    ? t("profile.next_change_in").replace("{time}", remaining)
-                    : isAdmin
-                      ? t("profile.dialog_desc_admin")
-                      : t("profile.dialog_desc_user")}
-                </DialogDescription>
-              </DialogHeader>
-              {cooldown.locked && (
-                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">
-                  {t("profile.next_change_on").replace("{date}", cooldown.nextChangeDate.toLocaleDateString())}
-                </div>
-              )}
-              <div className="grid gap-4 sm:grid-cols-[112px_1fr] sm:items-end">
-                <label className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-secondary/40 text-center text-sm font-bold text-muted-foreground ${cooldown.locked ? "cursor-not-allowed opacity-60" : "hover:border-primary hover:text-primary"}`}>
-                  {avatarUrl ? <img src={avatarUrl} alt="" className="h-full w-full rounded-3xl object-cover" /> : <Upload className="mb-2 h-6 w-6" />}
-                  {!avatarUrl && t("common.upload")}
-                  <input type="file" accept="image/jpeg,image/png,image/webp" disabled={cooldown.locked || saving} className="hidden" onChange={(e) => handleAvatar(e.target.files?.[0])} />
-                </label>
-                <div className="space-y-3">
-                  <label className="block text-sm font-semibold">
-                    {t("profile.display_name")}
-                    <input
-                      value={name}
-                      disabled={cooldown.locked || saving}
-                      onChange={(e) => setName(e.target.value)}
-                      className="mt-1.5 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    disabled={cooldown.locked || saving || !name.trim()}
-                    onClick={saveProfile}
-                    className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60"
-                  >
-                    {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t("profile.save_profile")}
-                  </button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </section>
-
-        <section className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <QuickAction icon={ScanLine} title={t("profile.scan_title")} description={t("profile.scan_desc")} to="/scan" primary />
-          <QuickAction icon={History} title={t("profile.history_title")} description={t("profile.history_desc")} to="/history" />
-          <QuickAction icon={ChefHat} title={t("profile.favorites_title")} description={t("profile.favorites_desc")} to="/favorites" />
-          <QuickAction icon={CalendarDays} title={t("profile.planner_title")} description={t("profile.planner_desc")} to="/planner" />
-          <QuickAction icon={BarChart3} title={t("profile.dashboard_title")} description={t("profile.dashboard_desc")} to="/dashboard" />
-          <QuickAction icon={HelpCircle} title={t("profile.support_title")} description={t("profile.support_desc")} to="/support" />
-          {user?.role === "admin" && (
-            <QuickAction icon={Shield} title={t("profile.admin_title")} description={t("profile.admin_desc")} to="/admin" />
-          )}
-        </section>
-
-        <section className="mt-6 rounded-[28px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
-          <div className="mb-4 flex items-center justify-between gap-4">
-            <div>
-              <h2 className="font-heading text-xl font-bold">{t("profile.latest_activity")}</h2>
-              <p className="mt-0.5 text-sm text-muted-foreground">{t("profile.history_desc")}</p>
-            </div>
-            <Link to="/history" className="rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground hover:bg-secondary/70">{t("common.view")}</Link>
-          </div>
-
-          {loading ? (
-            <IngreviaLoader compact message={t("loading.history")} />
-          ) : scanHistory.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-secondary/40 p-7 text-center text-sm text-muted-foreground">
-              {t("profile.no_activity")}
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {scanHistory.map((item) => (
-                <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background p-3 transition-colors hover:border-primary/30">
-                  {item.image_url ? (
-                    <img src={item.image_url} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
-                  ) : (
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary">
-                      <ScanLine className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{item.ingredient_name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.matched ? t("profile.matched") : t("profile.unmatched")}
-                      {item.confidence != null ? ` · ${Math.round(item.confidence)}%` : ""}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="mt-6 rounded-[28px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
-          <h2 className="font-heading text-xl font-bold">{t("profile.notifications")}</h2>
-          <div className="mt-4 space-y-3">
-            {notifications.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
-                {t("profile.notifications_empty")}
-              </div>
-            ) : (
-              notifications.map((notification) => (
-                <Link key={notification.id} to={notification.recipe_id ? `/community/${notification.recipe_id}` : "/community"} className="block rounded-2xl border border-border/60 bg-background p-3 text-sm hover:border-primary/30">
-                  <span className="font-semibold">{notification.message}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground">{new Date(notification.created_date).toLocaleString()}</span>
-                </Link>
-              ))
+          <div className="space-y-6">
+            {activeTab === "overview" && (
+              <section className="grid gap-3 sm:grid-cols-2">
+                <QuickAction icon={History} title={t("profile.history_title")} description={t("profile.history_desc")} to="/history" />
+                <QuickAction icon={ChefHat} title={t("profile.favorites_title")} description={t("profile.favorites_desc")} to="/favorites" />
+                <QuickAction icon={BarChart3} title={t("profile.dashboard_title")} description={t("profile.dashboard_desc")} to="/dashboard" />
+                <QuickAction icon={HelpCircle} title={t("profile.support_title")} description={t("profile.support_desc")} to="/support" />
+              </section>
             )}
+
+            {(activeTab === "overview" || activeTab === "activity") && <ActivityPanel loading={loading} scanHistory={scanHistory} t={t} />}
+
+            {activeTab === "saved" && (
+              <section className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+                <h2 className="font-heading text-xl font-bold">{t("profile.favorites_title")}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{t("profile.favorites_desc")}</p>
+                <Link to="/favorites" className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90">
+                  <ChefHat className="h-4 w-4" /> {t("common.view")}
+                </Link>
+              </section>
+            )}
+
+            {activeTab === "support" && (
+              <section className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+                <h2 className="font-heading text-xl font-bold">{t("profile.support_title")}</h2>
+                <p className="mt-1 text-sm text-muted-foreground">{t("profile.support_desc")}</p>
+                <Link to="/support" className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90">
+                  <HelpCircle className="h-4 w-4" /> {t("common.view")}
+                </Link>
+              </section>
+            )}
+
+            <NotificationsPanel notifications={notifications} t={t} />
           </div>
         </section>
 
         <div className="mt-8 flex justify-center">
-          <button
-            onClick={() => logout(false)}
-            className="rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-secondary/60"
-          >
-            {t("auth.logout")}
+          <button onClick={() => logout(false)} className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-5 py-2.5 text-sm font-semibold text-foreground shadow-sm hover:bg-secondary/60">
+            <LogOut className="h-4 w-4" /> {t("auth.logout")}
           </button>
         </div>
       </div>
     </Layout>
+  );
+}
+
+function ProfileEditDialog({ avatarUrl, cooldown, displayName, editOpen, handleAvatar, isAdmin, name, remaining, saveProfile, saving, setEditOpen, setName, t }) {
+  return (
+    <Dialog open={editOpen} onOpenChange={setEditOpen}>
+      <DialogContent className="max-w-md rounded-3xl">
+        <DialogHeader>
+          <DialogTitle>{t("profile.edit_public")}</DialogTitle>
+          <DialogDescription>
+            {cooldown.locked
+              ? t("profile.next_change_in").replace("{time}", remaining)
+              : isAdmin
+                ? t("profile.dialog_desc_admin")
+                : t("profile.dialog_desc_user")}
+          </DialogDescription>
+        </DialogHeader>
+        {cooldown.locked && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-800">
+            {t("profile.next_change_on").replace("{date}", cooldown.nextChangeDate.toLocaleDateString())}
+          </div>
+        )}
+        <div className="grid gap-4 sm:grid-cols-[112px_1fr] sm:items-end">
+          <label className={`flex aspect-square cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-border bg-secondary/40 text-center text-sm font-bold text-muted-foreground ${cooldown.locked ? "cursor-not-allowed opacity-60" : "hover:border-primary hover:text-primary"}`}>
+            {avatarUrl ? <img src={avatarUrl} alt={displayName} className="h-full w-full rounded-3xl object-cover" /> : <Upload className="mb-2 h-6 w-6" />}
+            {!avatarUrl && t("common.upload")}
+            <input type="file" accept="image/jpeg,image/png,image/webp" disabled={cooldown.locked || saving} className="hidden" onChange={(e) => handleAvatar(e.target.files?.[0])} />
+          </label>
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold">
+              {t("profile.display_name")}
+              <input value={name} disabled={cooldown.locked || saving} onChange={(e) => setName(e.target.value)} className="mt-1.5 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60" />
+            </label>
+            <button type="button" disabled={cooldown.locked || saving || !name.trim()} onClick={saveProfile} className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60">
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t("profile.save_profile")}
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ActivityPanel({ loading, scanHistory, t }) {
+  return (
+    <section className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <div>
+          <h2 className="font-heading text-xl font-bold">{t("profile.latest_activity")}</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">{t("profile.history_desc")}</p>
+        </div>
+        <Link to="/history" className="rounded-full bg-secondary px-4 py-2 text-sm font-semibold text-foreground hover:bg-secondary/70">{t("common.view")}</Link>
+      </div>
+
+      {loading ? (
+        <IngreviaLoader compact message={t("loading.history")} />
+      ) : scanHistory.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border bg-secondary/40 p-7 text-center text-sm text-muted-foreground">
+          {t("profile.no_activity")}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {scanHistory.map((item) => (
+            <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background p-3 transition-colors hover:border-primary/30">
+              {item.image_url ? (
+                <img src={item.image_url} alt={item.ingredient_name || ""} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary">
+                  <ScanLine className="h-5 w-5 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold">{item.ingredient_name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {item.matched ? t("profile.matched") : t("profile.unmatched")}
+                  {item.confidence != null ? ` - ${Math.round(item.confidence)}%` : ""}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function NotificationsPanel({ notifications, t }) {
+  return (
+    <section className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm sm:p-6">
+      <div className="flex items-center gap-2">
+        <Bell className="h-5 w-5 text-primary" />
+        <h2 className="font-heading text-xl font-bold">{t("profile.notifications")}</h2>
+      </div>
+      <div className="mt-4 space-y-3">
+        {notifications.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border bg-secondary/40 p-6 text-center text-sm text-muted-foreground">
+            {t("profile.notifications_empty")}
+          </div>
+        ) : (
+          notifications.map((notification) => (
+            <Link key={notification.id} to={notification.recipe_id ? `/community/${notification.recipe_id}` : "/community"} className="block rounded-2xl border border-border/60 bg-background p-3 text-sm hover:border-primary/30">
+              <span className="font-semibold">{notification.message}</span>
+              <span className="mt-1 block text-xs text-muted-foreground">{new Date(notification.created_date).toLocaleString()}</span>
+            </Link>
+          ))
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -370,7 +391,7 @@ function formatCooldownRemaining(nextChangeDate, now) {
 
 function ProfileStat({ icon: Icon, label, value }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-border/60 bg-background/85 p-3 shadow-sm backdrop-blur sm:p-4">
+    <div className="min-w-0 rounded-2xl border border-border/60 bg-background/90 p-3 shadow-sm backdrop-blur sm:p-4">
       <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-primary">
         <Icon className="h-4 w-4" />
       </div>
@@ -380,11 +401,25 @@ function ProfileStat({ icon: Icon, label, value }) {
   );
 }
 
+function ProfileTab({ active, icon: Icon, label, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold transition-colors ${
+        active ? "bg-card text-primary shadow-sm" : "text-muted-foreground hover:bg-background/70 hover:text-foreground"
+      }`}
+    >
+      <Icon className="h-4 w-4" /> {label}
+    </button>
+  );
+}
+
 function QuickAction({ icon: Icon, title, description, to, primary = false }) {
   return (
     <Link
       to={to}
-      className={`group min-h-[150px] rounded-[24px] border p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${
+      className={`group min-h-[128px] rounded-[22px] border p-5 transition-all hover:-translate-y-0.5 hover:shadow-lg ${
         primary
           ? "border-primary/20 bg-[linear-gradient(135deg,hsl(18,71%,42%),hsl(25,75%,48%))] text-primary-foreground shadow-md shadow-primary/15"
           : "border-border/60 bg-card shadow-sm"
