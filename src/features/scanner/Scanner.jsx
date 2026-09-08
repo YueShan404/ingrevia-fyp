@@ -27,9 +27,35 @@ const getIngredientTerms = (ingredient) =>
     .filter(Boolean)
     .map(normalizeText);
 
+const BROAD_LABELS = new Set([
+  "food",
+  "ingredient",
+  "vegetable",
+  "leaf vegetable",
+  "plant",
+  "produce",
+  "greens",
+  "leaf",
+  "natural foods",
+]);
+
+const EXTRA_ALIASES = {
+  kangkung: ["water spinach", "morning glory", "chinese water spinach", "swamp cabbage", "ong choy", "kangkong"],
+  cabbage: ["cabbage", "round cabbage", "green cabbage"],
+  "chinese cabbage": ["chinese cabbage", "napa cabbage", "wong bok"],
+  "bok choy": ["bok choy", "pak choy", "choy sum"],
+};
+
+const allIngredientTerms = (ingredient) => {
+  const baseTerms = getIngredientTerms(ingredient);
+  const aliases = baseTerms.flatMap((term) => EXTRA_ALIASES[term] || []);
+  return [...new Set([...baseTerms, ...aliases.map(normalizeText)])];
+};
+
 const scoreIngredient = (ingredient, query) => {
   if (!query) return 0;
-  const terms = getIngredientTerms(ingredient);
+  if (BROAD_LABELS.has(query)) return 0;
+  const terms = allIngredientTerms(ingredient);
   return terms.reduce((score, term) => {
     if (!term) return score;
     if (term === query) return Math.max(score, 96);
@@ -43,6 +69,25 @@ const scoreIngredient = (ingredient, query) => {
     }
     return score;
   }, 0);
+};
+
+const rankIngredientsFromDetection = (ingredients, detection) => {
+  const queries = [
+    detection?.ingredient_name,
+    ...(detection?.common_names || []),
+    detection?.detected_category,
+  ]
+    .filter(Boolean)
+    .map(normalizeText)
+    .filter((query) => query && !BROAD_LABELS.has(query));
+
+  return (ingredients || [])
+    .map((ingredient) => ({
+      ingredient,
+      score: queries.reduce((best, query) => Math.max(best, scoreIngredient(ingredient, query)), 0),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score);
 };
 
 const fallbackRecognize = ({ file, ingredients, imageUrl, cause }) => {
@@ -164,13 +209,24 @@ export default function Scanner() {
         });
       }
 
-      const matchedIngredient = llmResult.matched_ingredient;
-      const confidence = llmResult.confidence || 0;
+      const rankedCatalogue = rankIngredientsFromDetection(ingredients, llmResult);
+      const bestCatalogue = rankedCatalogue[0];
+      const secondCatalogue = rankedCatalogue[1];
+      const clearCatalogueMatch = Boolean(
+        bestCatalogue &&
+        bestCatalogue.score >= 86 &&
+        (!secondCatalogue || bestCatalogue.score - secondCatalogue.score >= 8)
+      );
       const fallbackMatchedIngredient = llmResult.matchedIngredient;
-      const matched = !!(matchedIngredient || fallbackMatchedIngredient) && confidence >= 40;
+      const candidateIngredient = clearCatalogueMatch ? bestCatalogue.ingredient : fallbackMatchedIngredient;
+      const confidence = llmResult.confidence || 0;
+      const matched = !!candidateIngredient && confidence >= 55 && (clearCatalogueMatch || Boolean(fallbackMatchedIngredient));
+      const matchedIngredient = matched ? candidateIngredient : null;
 
       const scanResult = {
-        ingredient_name: llmResult.ingredient_name || "",
+        ingredient_name: matched
+          ? (matchedIngredient || fallbackMatchedIngredient)?.name || llmResult.ingredient_name || ""
+          : llmResult.ingredient_name || "",
         confidence,
         description: llmResult.description || "",
         matchedIngredient: matchedIngredient || fallbackMatchedIngredient,
@@ -180,7 +236,7 @@ export default function Scanner() {
         source: llmResult.source || "catalogue_fallback",
         detected_category: llmResult.detected_category || "",
         common_names: llmResult.common_names || [],
-        suggestions: llmResult.suggestions || [],
+        suggestions: rankedCatalogue.length ? rankedCatalogue.slice(0, 5).map((item) => item.ingredient) : llmResult.suggestions || [],
       };
       setResult(scanResult);
 
@@ -189,10 +245,10 @@ export default function Scanner() {
       try {
         await appApi.scanHistory.create({
           ingredient_name: historyName,
-          ingredient_id: scanResult.matchedIngredient?.id || null,
+          ingredient_id: scanResult.matched ? scanResult.matchedIngredient?.id || null : null,
           image_url: file_url && !file_url.startsWith("data:") ? file_url : null,
           confidence,
-          matched: Boolean(scanResult.matchedIngredient),
+          matched: scanResult.matched,
         });
       } catch (historyError) {
         console.warn("Unable to save scan history.", historyError);

@@ -100,6 +100,45 @@ const getCurrentUser = async () => {
   return user;
 };
 
+const localScanHistoryKey = (userId) => `ingrevia_scan_history_${userId}`;
+
+const readLocalScanHistory = (userId) => {
+  try {
+    return JSON.parse(localStorage.getItem(localScanHistoryKey(userId)) || "[]");
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalScanHistory = (userId, rows) => {
+  localStorage.setItem(localScanHistoryKey(userId), JSON.stringify(rows.slice(0, 100)));
+};
+
+const createLocalScanHistory = (userId, values, synced = false) => {
+  const row = {
+    id: `local-${crypto.randomUUID?.() || Date.now()}`,
+    created_date: new Date().toISOString(),
+    updated_date: new Date().toISOString(),
+    user_id: userId,
+    synced,
+    ...values,
+  };
+  writeLocalScanHistory(userId, [row, ...readLocalScanHistory(userId)]);
+  return row;
+};
+
+const mergeScanHistoryRows = (remoteRows, localRows) => {
+  const seen = new Set();
+  return [...(remoteRows || []), ...(localRows || [])]
+    .filter((row) => {
+      const key = row.id || `${row.created_date}-${row.ingredient_name}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => new Date(b.created_date) - new Date(a.created_date));
+};
+
 export const appApi = {
   entities: {
     Ingredient: createEntityApi("Ingredient"),
@@ -111,16 +150,22 @@ export const appApi = {
   scanHistory: {
     async create(values) {
       const user = await getCurrentUser();
+      const payload = { ...values, user_id: user.id };
       const { data, error } = await supabase
         .from("scan_history")
-        .insert({ ...values, user_id: user.id })
+        .insert(payload)
         .select("*")
         .single();
-      if (error) throw error;
+      if (error) {
+        console.warn("Remote scan history insert failed; saving local backup.", error);
+        return createLocalScanHistory(user.id, values, false);
+      }
+      createLocalScanHistory(user.id, data, true);
       return data;
     },
 
     async listRecent(days = 30, limit = 50) {
+      const user = await getCurrentUser();
       const since = new Date();
       since.setDate(since.getDate() - days);
 
@@ -129,12 +174,27 @@ export const appApi = {
       const { data, error } = await supabase
         .from("scan_history")
         .select("*")
+        .eq("user_id", user.id)
         .gte("created_date", since.toISOString())
         .order("created_date", { ascending: false })
         .limit(limit);
 
+      const localRows = readLocalScanHistory(user.id).filter((row) => new Date(row.created_date) >= since);
+      if (error) {
+        console.warn("Remote scan history load failed; using local backup.", error);
+        return localRows.slice(0, limit);
+      }
+      return mergeScanHistoryRows(data || [], localRows).slice(0, limit);
+    },
+
+    async delete(id) {
+      const user = await getCurrentUser();
+      writeLocalScanHistory(user.id, readLocalScanHistory(user.id).filter((row) => row.id !== id));
+      if (String(id).startsWith("local-")) return true;
+
+      const { error } = await supabase.from("scan_history").delete().eq("id", id).eq("user_id", user.id);
       if (error) throw error;
-      return data || [];
+      return true;
     },
   },
 
@@ -170,7 +230,8 @@ export const appApi = {
           .limit(50),
       ]);
 
-      if (scans.error) throw scans.error;
+      const localScans = readLocalScanHistory(user.id);
+      if (scans.error) console.warn("Scan history unavailable; using local backup.", scans.error);
       if (bookmarks.error) console.warn("Saved recipe history unavailable.", bookmarks.error);
       if (likes.error) console.warn("Liked recipe history unavailable.", likes.error);
       if (comments.error) console.warn("Comment history unavailable.", comments.error);
@@ -201,7 +262,7 @@ export const appApi = {
       }));
 
       return {
-        scans: scans.data || [],
+        scans: mergeScanHistoryRows(scans.error ? [] : scans.data || [], localScans).slice(0, 50),
         saved,
         liked: likes.error ? [] : likes.data || [],
         commented: comments.error ? [] : comments.data || [],

@@ -32,7 +32,7 @@ export default function ScanHistoryPage() {
   const clearScans = async () => {
     if (!confirm(t("history.clear") + "?")) return;
     for (const item of activity.scans) {
-      await appApi.entities.ScanHistory.delete(item.id).catch(() => {});
+      await appApi.scanHistory.delete(item.id).catch(() => {});
     }
     load();
   };
