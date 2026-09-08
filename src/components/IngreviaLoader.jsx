@@ -4,7 +4,7 @@ export default function IngreviaLoader({ message = "Loading your journey...", fu
   return (
     <div className={`ingrevia-loader ${fullScreen ? "ingrevia-loader-full" : ""} ${compact ? "ingrevia-loader-compact" : ""}`} role="status">
       <div className="ingrevia-loader-symbol" aria-hidden="true">
-        <img src="/ingrevia-mark-transparent.png" alt="" className="ingrevia-loader-mark" />
+        <img src="/ingrevia-site-icon.png" alt="" className="ingrevia-loader-mark" />
       </div>
 
       <div className="ingrevia-loader-text">
