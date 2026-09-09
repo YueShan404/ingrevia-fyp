@@ -26,6 +26,7 @@ export default function SubmitRecipe() {
   const [uploadingImages, setUploadingImages] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const submitRestricted = user?.status === "submit_restricted" || user?.status === "profile_blocked";
 
   const handleImages = async (fileList) => {
     const files = Array.from(fileList || []);
@@ -64,6 +65,10 @@ export default function SubmitRecipe() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitRestricted) {
+      alert(t("community.submit_restricted"));
+      return;
+    }
     if (images.length < 1) {
       alert(t("submit.image_required") || "Please upload at least one recipe image.");
       return;
@@ -199,6 +204,11 @@ export default function SubmitRecipe() {
         </div>
 
         <form onSubmit={handleSubmit} className="glass-card rounded-3xl border border-border/50 p-6 space-y-5">
+          {submitRestricted && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+              {t("community.submit_restricted")}
+            </div>
+          )}
           {/* Photo */}
           <div>
             <label className="block text-sm font-semibold mb-2">{t("submit.photo")}</label>
@@ -302,7 +312,7 @@ export default function SubmitRecipe() {
               className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[hsl(18,71%,42%)]" />
           </Field>
 
-          <button type="submit" disabled={submitting}
+          <button type="submit" disabled={submitting || submitRestricted}
             className="w-full py-3.5 rounded-full brand-gradient text-white font-semibold shadow-lg shadow-[hsl(18,71%,42%,0.3)] hover:scale-[1.02] transition-transform disabled:opacity-60 flex items-center justify-center gap-2">
             {submitting ? <><Loader2 className="w-5 h-5 animate-spin" /> {t("submit.submitting")}</> : t("submit.submit_btn")}
           </button>

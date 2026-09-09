@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages, UserX, ShieldCheck, MessageSquareWarning, Search, Eye, Pencil, Save } from "lucide-react";
-import { BADGES, badgeImage } from "@/lib/achievements";
+import { Shield, Trash2, Check, X, BookOpen, ChefHat, Users, Upload, Languages, UserX, ShieldCheck, MessageSquareWarning, Search, Eye, Pencil, Save, Bell, Plus, MessageCircle, Send, PenSquare } from "lucide-react";
+import { badgeImage, mergeBadgeDefinitions } from "@/lib/achievements";
 
 export default function Admin() {
   const { t, lang } = useI18n();
@@ -23,10 +23,15 @@ export default function Admin() {
   const [community, setCommunity] = useState([]);
   const [profiles, setProfiles] = useState([]);
   const [feedback, setFeedback] = useState([]);
+  const [customBadges, setCustomBadges] = useState([]);
+  const [announcement, setAnnouncement] = useState({ title: "", message: "", image_url: "" });
+  const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
+  const [uploadingAnnouncementImage, setUploadingAnnouncementImage] = useState(false);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   const { toast } = useToast();
   const bulkFileRef = useRef(null);
+  const announcementFileRef = useRef(null);
   const [bulkImporting, setBulkImporting] = useState(false);
   const [translatingRecipeId, setTranslatingRecipeId] = useState(null);
   const [bulkTranslating, setBulkTranslating] = useState(false);
@@ -39,6 +44,7 @@ export default function Admin() {
 
   const filteredIngredients = useMemo(() => filterAdminItems(ingredients, search, ["name", "name_bm", "name_zh", "name_ta", "category"]), [ingredients, search]);
   const filteredRecipes = useMemo(() => filterAdminItems(recipes, search, ["title", "title_bm", "title_zh", "title_ta", "cuisine", "description"]), [recipes, search]);
+  const adminBadges = useMemo(() => mergeBadgeDefinitions(customBadges), [customBadges]);
 
   const loadAll = () => {
     Promise.all([
@@ -47,12 +53,14 @@ export default function Admin() {
       appApi.entities.CommunityRecipe.list("-created_date").catch(() => []),
       appApi.profiles.listForAdmin().catch(() => []),
       appApi.feedback.listForAdmin().catch(() => []),
-    ]).then(([ings, recs, comm, users, reports]) => {
+      appApi.badges.list().catch(() => []),
+    ]).then(([ings, recs, comm, users, reports, badgeRows]) => {
       setIngredients(ings || []);
       setRecipes(recs || []);
       setCommunity(comm || []);
       setProfiles(users || []);
       setFeedback(reports || []);
+      setCustomBadges(badgeRows || []);
       setLoading(false);
     });
   };
@@ -111,8 +119,12 @@ export default function Admin() {
     if (!editingItem || !detailType || !detailItem) return;
     setSavingItem(true);
     try {
-      const api = detailType === "ingredient" ? appApi.entities.Ingredient : appApi.entities.Recipe;
-      await api.update(detailItem.id, normalizeEditDraft(detailType, editingItem));
+      if (detailType === "badge") {
+        await appApi.badges.save(normalizeEditDraft(detailType, editingItem));
+      } else {
+        const api = detailType === "ingredient" ? appApi.entities.Ingredient : appApi.entities.Recipe;
+        await api.update(detailItem.id, normalizeEditDraft(detailType, editingItem));
+      }
       toast({ title: t("admin.edit_saved") });
       setEditingItem(null);
       setDetailItem(null);
@@ -239,9 +251,59 @@ export default function Admin() {
     await appApi.entities.CommunityRecipe.delete(id);
     loadAll();
   };
-  const setUserStatus = async (id, status) => {
-    await appApi.profiles.setStatus(id, status);
+
+  const deleteBadge = async (id) => {
+    if (!confirm(t("admin.confirm_delete"))) return;
+    await appApi.badges.delete(id);
     loadAll();
+  };
+
+  const uploadAnnouncementImage = async (file) => {
+    if (!file) return;
+    setUploadingAnnouncementImage(true);
+    try {
+      const { file_url } = await appApi.integrations.Core.UploadFile({ file });
+      setAnnouncement((current) => ({ ...current, image_url: file_url }));
+    } catch (error) {
+      toast({ title: t("admin.upload_photo_failed"), description: error?.message || t("common.try_again"), variant: "destructive" });
+    } finally {
+      setUploadingAnnouncementImage(false);
+      if (announcementFileRef.current) announcementFileRef.current.value = "";
+    }
+  };
+  const setUserStatus = async (id, status) => {
+    try {
+      await appApi.profiles.setStatus(id, status);
+      loadAll();
+    } catch (err) {
+      toast({
+        title: t("admin.user_status_failed"),
+        description: err?.message || t("common.try_again"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const sendAnnouncement = async (event) => {
+    event.preventDefault();
+    if (!announcement.title.trim() || !announcement.message.trim()) return;
+    setSendingAnnouncement(true);
+    try {
+      await appApi.social.notifyUsers({
+        userIds: profiles.filter((profile) => profile.status !== "blocked").map((profile) => profile.id),
+        actorUserId: user?.id,
+        type: "announcement",
+        title: announcement.title.trim(),
+        message: announcement.message.trim(),
+        image_url: announcement.image_url.trim(),
+      });
+      toast({ title: t("admin.announcement_sent") });
+      setAnnouncement({ title: "", message: "", image_url: "" });
+    } catch (err) {
+      toast({ title: t("admin.announcement_title"), description: err?.message || t("common.try_again"), variant: "destructive" });
+    } finally {
+      setSendingAnnouncement(false);
+    }
   };
   const setFeedbackStatus = async (id, status) => {
     await appApi.feedback.setStatus(id, status);
@@ -254,7 +316,8 @@ export default function Admin() {
     { key: "community", label: t("admin.tab_community"), icon: Users, count: community.filter((c) => c.status === "pending").length },
     { key: "users", label: t("admin.tab_users"), icon: ShieldCheck, count: profiles.filter((p) => p.status === "blocked").length },
     { key: "feedback", label: t("admin.tab_feedback"), icon: MessageSquareWarning, count: feedback.filter((item) => item.status === "open").length },
-    { key: "badges", label: t("admin.tab_badges"), icon: Shield, count: BADGES.length },
+    { key: "badges", label: t("admin.tab_badges"), icon: Shield, count: adminBadges.length },
+    { key: "announcements", label: t("admin.tab_announcements"), icon: Bell, count: 0 },
   ];
 
   if (user?.role !== "admin") {
@@ -369,6 +432,26 @@ export default function Admin() {
                 ),
               })} t={t} />
           </>
+        ) : tab === "announcements" ? (
+          <form onSubmit={sendAnnouncement} className="mx-auto max-w-3xl glass-card rounded-3xl border border-border/50 p-5 space-y-4">
+            <div>
+              <h2 className="font-heading text-xl font-bold">{t("admin.announcement_title")}</h2>
+              <p className="text-sm text-muted-foreground">{t("admin.announcement_body")}</p>
+            </div>
+            <input value={announcement.title} onChange={(e) => setAnnouncement({ ...announcement, title: e.target.value })} required maxLength={120} placeholder={t("admin.announcement_subject")} className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+            <textarea value={announcement.message} onChange={(e) => setAnnouncement({ ...announcement, message: e.target.value })} required maxLength={1000} placeholder={t("admin.announcement_body")} className="min-h-32 w-full rounded-2xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <input value={announcement.image_url} onChange={(e) => setAnnouncement({ ...announcement, image_url: e.target.value })} placeholder={t("admin.announcement_image")} className="h-11 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20" />
+              <input ref={announcementFileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => uploadAnnouncementImage(e.target.files?.[0])} />
+              <button type="button" disabled={uploadingAnnouncementImage} onClick={() => announcementFileRef.current?.click()} className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-secondary px-4 text-sm font-bold text-foreground disabled:opacity-60">
+                <Upload className="h-4 w-4" /> {uploadingAnnouncementImage ? t("admin.uploading_photo") : t("admin.upload_photo")}
+              </button>
+            </div>
+            {announcement.image_url && <img src={announcement.image_url} alt="" className="h-40 w-full rounded-2xl object-cover" />}
+            <button disabled={sendingAnnouncement} className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60">
+              <Send className="h-4 w-4" /> {sendingAnnouncement ? t("support.sending") : t("admin.announcement_title")}
+            </button>
+          </form>
         ) : tab === "community" ? (
           <div className="space-y-3">
             {community.length === 0 ? (
@@ -386,10 +469,10 @@ export default function Admin() {
                   }`}>{t(`community.status_${item.status}`)}</span>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
-                  <button onClick={() => approveCommunity(item.id)} className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 hover:scale-110 transition-transform">
+                  <button onClick={() => approveCommunity(item)} className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 hover:scale-110 transition-transform">
                     <Check className="w-4 h-4" />
                   </button>
-                  <button onClick={() => rejectCommunity(item.id)} className="p-2 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-600 hover:scale-110 transition-transform">
+                  <button onClick={() => rejectCommunity(item)} className="p-2 rounded-full bg-amber-100 dark:bg-amber-900 text-amber-600 hover:scale-110 transition-transform">
                     <X className="w-4 h-4" />
                   </button>
                   <button onClick={() => deleteCommunity(item.id)} className="p-2 rounded-full bg-red-100 dark:bg-red-900 text-red-600 hover:scale-110 transition-transform">
@@ -418,7 +501,7 @@ export default function Admin() {
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-foreground/70">{profile.role}</span>
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      profile.status === "blocked" ? "bg-red-100 text-red-700" : "bg-emerald-100 text-emerald-700"
+                      profile.status === "blocked" || profile.status === "profile_blocked" ? "bg-red-100 text-red-700" : profile.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
                     }`}>{profile.status}</span>
                   </div>
                 </div>
@@ -434,22 +517,26 @@ export default function Admin() {
                       <Check className="w-4 h-4" />
                     </button>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => setUserStatus(profile.id, "blocked")}
-                      className="shrink-0 p-2 rounded-full bg-red-100 dark:bg-red-900 text-red-600 hover:scale-110 transition-transform"
-                      title={t("admin.block_user")}
-                      aria-label={t("admin.block_user")}
-                    >
-                      <UserX className="w-4 h-4" />
-                    </button>
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      <button type="button" onClick={() => setUserStatus(profile.id, "comment_restricted")} className="shrink-0 p-2 rounded-full bg-amber-100 text-amber-700 hover:scale-110 transition-transform" title={t("admin.restrict_comments")} aria-label={t("admin.restrict_comments")}><MessageCircle className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => setUserStatus(profile.id, "submit_restricted")} className="shrink-0 p-2 rounded-full bg-amber-100 text-amber-700 hover:scale-110 transition-transform" title={t("admin.restrict_submit")} aria-label={t("admin.restrict_submit")}><PenSquare className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => setUserStatus(profile.id, "profile_blocked")} className="shrink-0 p-2 rounded-full bg-red-100 text-red-600 hover:scale-110 transition-transform" title={t("admin.block_profile")} aria-label={t("admin.block_profile")}><Shield className="w-4 h-4" /></button>
+                      <button type="button" onClick={() => setUserStatus(profile.id, "blocked")} className="shrink-0 p-2 rounded-full bg-red-100 dark:bg-red-900 text-red-600 hover:scale-110 transition-transform" title={t("admin.block_user")} aria-label={t("admin.block_user")}><UserX className="w-4 h-4" /></button>
+                    </div>
                   )
                 )}
               </div>
             ))}
           </div>
         ) : tab === "badges" ? (
-          <AdminBadgeList badges={filterAdminItems(BADGES, search, ["name", "description", "requirement", "rarity"])} t={t} />
+          <>
+            <div className="mb-4 flex justify-end">
+              <button onClick={() => startEdit("badge", createEditDraft("badge", {}))} className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground">
+                <Plus className="h-4 w-4" /> {t("admin.add_badge")}
+              </button>
+            </div>
+            <AdminBadgeList badges={filterAdminItems(adminBadges, search, ["name", "description", "requirement", "rarity", "metric"])} t={t} onDetails={(item) => openDetails("badge", item)} onEdit={(item) => startEdit("badge", item)} onDelete={deleteBadge} />
+          </>
         ) : (
           <div className="space-y-3">
             {feedback.length === 0 ? (
@@ -546,7 +633,7 @@ function filterAdminItems(items, query, fields) {
   );
 }
 
-function AdminBadgeList({ badges, t }) {
+function AdminBadgeList({ badges, t, onDetails, onEdit, onDelete }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       {badges.length === 0 ? (
@@ -554,7 +641,7 @@ function AdminBadgeList({ badges, t }) {
       ) : badges.map((badge) => (
         <article key={badge.id} className="glass-card rounded-2xl border border-border/50 p-4">
           <div className="flex items-start gap-4">
-            <img src={badgeImage(badge.id)} alt={badge.name} className="h-16 w-16 shrink-0 object-contain" />
+            <img src={badge.image_url || badgeImage(badge.id)} alt={badge.name} className="h-16 w-16 shrink-0 object-contain" />
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-heading text-base font-bold">{badge.name}</h3>
@@ -563,6 +650,11 @@ function AdminBadgeList({ badges, t }) {
               <p className="mt-1 text-sm text-muted-foreground">{badge.description}</p>
               <p className="mt-2 text-xs font-semibold text-foreground">{badge.requirement}</p>
               <p className="mt-1 text-xs text-muted-foreground">{t("admin.badge_metric")}: {badge.metric} / {badge.target}</p>
+              <div className="mt-3 flex gap-2">
+                <button type="button" onClick={() => onDetails?.(badge)} className="rounded-full bg-secondary p-2 text-foreground"><Eye className="h-4 w-4" /></button>
+                <button type="button" onClick={() => onEdit?.(badge)} className="rounded-full bg-secondary p-2 text-primary"><Pencil className="h-4 w-4" /></button>
+                {badge.is_custom && <button type="button" onClick={() => onDelete?.(badge.id)} className="rounded-full bg-red-50 p-2 text-red-600"><Trash2 className="h-4 w-4" /></button>}
+              </div>
             </div>
           </div>
         </article>
@@ -572,6 +664,29 @@ function AdminBadgeList({ badges, t }) {
 }
 
 function createEditDraft(type, item) {
+  if (type === "badge") {
+    return {
+      id: item.id || "",
+      name: item.name || "",
+      description: item.description || "",
+      requirement: item.requirement || "",
+      metric: item.metric || "scanCount",
+      target: item.target ?? 1,
+      rarity: item.rarity || "bronze",
+      image_url: item.image_url || "",
+      is_custom: item.is_custom !== false,
+    };
+  }
+
+  if (type === "badge") {
+    return {
+      ...draft,
+      id: draft.id || `custom-${String(draft.name || "badge").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || Date.now()}`,
+      target: numberOrNull(draft.target) || 1,
+      is_custom: draft.is_custom !== false,
+    };
+  }
+
   if (type === "ingredient") {
     return {
       name: item.name || "",
@@ -626,20 +741,22 @@ function AdminDetailDialog({ detailItem, detailType, editingItem, onClose, onEdi
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   if (!detailItem || !detailType) return null;
   const isEditing = Boolean(editingItem);
-  const fields = detailType === "ingredient"
-    ? ["name", "category", "image_url", "calories", "protein", "carbs", "fiber", "fat", "sodium"]
-    : ["title", "cuisine", "image_url", "description", "prep_time", "cook_time", "servings", "ingredient_tags"];
+  const fields = detailType === "badge"
+    ? ["id", "name", "description", "requirement", "metric", "target", "rarity", "image_url"]
+    : detailType === "ingredient"
+      ? ["name", "category", "image_url", "calories", "protein", "carbs", "fiber", "fat", "sodium"]
+      : ["title", "cuisine", "image_url", "description", "prep_time", "cook_time", "servings", "ingredient_tags"];
 
   return (
     <Dialog open={Boolean(detailItem)} onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto rounded-3xl">
         <DialogHeader>
           <DialogTitle>{isEditing ? t("admin.edit") : t("admin.details")}</DialogTitle>
-          <DialogDescription>{detailType === "ingredient" ? t("admin.ingredient_record") : t("admin.recipe_record")}</DialogDescription>
+          <DialogDescription>{detailType === "badge" ? t("admin.badge_record") : detailType === "ingredient" ? t("admin.ingredient_record") : t("admin.recipe_record")}</DialogDescription>
         </DialogHeader>
 
-        {detailItem.image_url && (
-          <img src={detailItem.image_url} alt="" className="h-48 w-full rounded-2xl object-cover" />
+        {(detailItem.image_url || (detailType === "badge" && badgeImage(detailItem.id))) && (
+          <img src={detailItem.image_url || badgeImage(detailItem.id)} alt="" className="h-48 w-full rounded-2xl object-contain bg-secondary/40" />
         )}
 
         {isEditing && (

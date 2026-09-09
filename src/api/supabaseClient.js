@@ -101,6 +101,19 @@ const getCurrentUser = async () => {
 };
 
 const localScanHistoryKey = (userId) => `ingrevia_scan_history_${userId}`;
+const localBadgesKey = "ingrevia_admin_badges";
+
+const readLocalBadges = () => {
+  try {
+    return JSON.parse(localStorage.getItem(localBadgesKey) || "[]");
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalBadges = (rows) => {
+  localStorage.setItem(localBadgesKey, JSON.stringify(rows));
+};
 
 const readLocalScanHistory = (userId) => {
   try {
@@ -517,7 +530,7 @@ export const appApi = {
       if (!userId) return null;
       const { data, error } = await supabase
         .from("profiles")
-        .select("id,full_name,avatar_url,public_user_id,created_date")
+        .select("id,full_name,avatar_url,public_user_id,status,created_date")
         .eq("id", userId)
         .maybeSingle();
       if (error) throw error;
@@ -527,7 +540,7 @@ export const appApi = {
     async getPublicByPublicId(publicUserId) {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id,full_name,avatar_url,public_user_id,created_date")
+        .select("id,full_name,avatar_url,public_user_id,status,created_date")
         .eq("public_user_id", publicUserId)
         .maybeSingle();
       if (error) throw error;
@@ -552,6 +565,40 @@ export const appApi = {
         .single();
       if (error) throw error;
       return data;
+    },
+  },
+
+  badges: {
+    async list() {
+      const localRows = readLocalBadges();
+      const { data, error } = await supabase.from("badges").select("*").order("created_date", { ascending: false });
+      if (error) return localRows;
+      const byId = new Map(localRows.map((badge) => [badge.id, badge]));
+      (data || []).forEach((badge) => byId.set(badge.id, badge));
+      const rows = [...byId.values()];
+      writeLocalBadges(rows);
+      return rows;
+    },
+
+    async save(values) {
+      const row = {
+        ...values,
+        id: values.id || `custom-${crypto.randomUUID?.() || Date.now()}`,
+        is_custom: values.is_custom !== false,
+        updated_date: new Date().toISOString(),
+      };
+      const localRows = readLocalBadges().filter((badge) => badge.id !== row.id);
+      writeLocalBadges([row, ...localRows]);
+      const { data, error } = await supabase.from("badges").upsert(row).select("*").single();
+      if (error) return row;
+      writeLocalBadges([data, ...localRows]);
+      return data;
+    },
+
+    async delete(id) {
+      writeLocalBadges(readLocalBadges().filter((badge) => badge.id !== id));
+      await supabase.from("badges").delete().eq("id", id).catch(() => {});
+      return true;
     },
   },
 
@@ -662,6 +709,34 @@ export const appApi = {
       return (data || []).map((row) => row.follower_id);
     },
 
+    async notifyUsers({ userIds, actorUserId, recipeId, type = "announcement", message, title, image_url }) {
+      const rows = [...new Set(userIds || [])].filter(Boolean).map((userId) => ({
+        user_id: userId,
+        actor_user_id: actorUserId || null,
+        recipe_id: recipeId || null,
+        type,
+        title: title || null,
+        image_url: image_url || null,
+        message,
+      }));
+      if (!rows.length) return [];
+      const { data, error } = await supabase.from("notifications").insert(rows).select("*");
+      if (!error) return data || [];
+
+      const missingOptionalColumn = ["title", "image_url"].some((field) =>
+        String(error.message || "").toLowerCase().includes(field)
+      );
+      if (!missingOptionalColumn) throw error;
+
+      const fallbackRows = rows.map(({ title, image_url, ...row }) => ({
+        ...row,
+        message: title ? `${title}: ${row.message}` : row.message,
+      }));
+      const fallback = await supabase.from("notifications").insert(fallbackRows).select("*");
+      if (fallback.error) throw fallback.error;
+      return fallback.data || [];
+    },
+
     async notifyFollowers({ followerIds, actorUserId, recipeId, recipeTitle }) {
       const rows = [...new Set(followerIds || [])].map((userId) => ({
         user_id: userId,
@@ -684,6 +759,22 @@ export const appApi = {
         .limit(limit);
       if (error) throw error;
       return data || [];
+    },
+
+    async unreadNotificationCount() {
+      const { count, error } = await supabase
+        .from("notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("read", false);
+      if (error) throw error;
+      return count || 0;
+    },
+
+    async markNotificationsRead(ids = []) {
+      const query = supabase.from("notifications").update({ read: true });
+      const { error } = ids.length ? await query.in("id", ids) : await query.eq("read", false);
+      if (error) throw error;
+      return true;
     },
   },
 };

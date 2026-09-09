@@ -27,9 +27,9 @@ export default function PublicProfile() {
     ])
       .then(async ([profileRow, recipeRows]) => {
         if (!active) return;
-        setProfile(profileRow);
+        setProfile(profileRow?.status === "profile_blocked" || profileRow?.status === "blocked" ? null : profileRow);
         setRecipes(recipeRows || []);
-        if (profileRow?.id && profileRow.id !== user?.id) {
+        if (profileRow?.id && profileRow.status !== "profile_blocked" && profileRow.status !== "blocked" && profileRow.id !== user?.id) {
           setFollowing(await appApi.social.isFollowing(profileRow.id).catch(() => false));
         }
       })

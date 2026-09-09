@@ -95,6 +95,15 @@ export function badgeImage(id) {
   return `/badges/${id}.png`;
 }
 
+export function mergeBadgeDefinitions(customBadges = []) {
+  const byId = new Map(BADGES.map((badge) => [badge.id, badge]));
+  (customBadges || []).forEach((badge) => {
+    if (!badge?.id) return;
+    byId.set(badge.id, { ...byId.get(badge.id), ...badge });
+  });
+  return [...byId.values()];
+}
+
 export function buildAchievementStats({
   scanHistory = [],
   favorites = [],
@@ -119,10 +128,10 @@ export function buildAchievementStats({
   };
 }
 
-export function computeBadges(stats) {
+export function computeBadges(stats, badgeDefinitions = BADGES) {
   let unlockedCore = 0;
 
-  const evaluated = BADGES.filter((badge) => badge.id !== "ingrevia-champion").map((badge) => {
+  const evaluated = badgeDefinitions.filter((badge) => badge.id !== "ingrevia-champion").map((badge) => {
     const value = Math.min(Number(stats[badge.metric]) || 0, badge.target);
     const unlocked = value >= badge.target;
     if (unlocked) unlockedCore += 1;
@@ -135,7 +144,7 @@ export function computeBadges(stats) {
     };
   });
 
-  const champion = BADGES.find((badge) => badge.id === "ingrevia-champion");
+  const champion = badgeDefinitions.find((badge) => badge.id === "ingrevia-champion") || BADGES.find((badge) => badge.id === "ingrevia-champion");
   evaluated.push({
     ...champion,
     value: unlockedCore,

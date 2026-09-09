@@ -61,7 +61,12 @@ export default function Profile() {
       setScanHistory(history || []);
       setRecipes(recipeRows || []);
       setCommunityRecipes((communityRows || []).filter((recipe) => recipe.user_id === user?.id));
-      setNotifications(notificationRows || []);
+      const rows = notificationRows || [];
+      setNotifications(rows);
+      const unreadIds = rows.filter((notification) => !notification.read).map((notification) => notification.id).filter(Boolean);
+      if (unreadIds.length) {
+        appApi.social.markNotificationsRead(unreadIds).catch(() => {});
+      }
       setLoading(false);
     });
   }, [user?.id]);
@@ -397,6 +402,8 @@ function NotificationsPanel({ notifications, t }) {
         ) : (
           notifications.map((notification) => (
             <Link key={notification.id} to={notification.recipe_id ? `/community/${notification.recipe_id}` : "/community"} className="block rounded-2xl border border-border/60 bg-background p-3 text-sm hover:border-primary/30">
+              {notification.image_url && <img src={notification.image_url} alt="" className="mb-2 h-28 w-full rounded-xl object-cover" />}
+              {notification.title && <span className="mb-1 block font-bold text-foreground">{notification.title}</span>}
               <span className="font-semibold">{notification.message}</span>
               <span className="mt-1 block text-xs text-muted-foreground">{new Date(notification.created_date).toLocaleString()}</span>
             </Link>

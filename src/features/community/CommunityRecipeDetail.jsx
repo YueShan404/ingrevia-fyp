@@ -21,6 +21,7 @@ export default function CommunityRecipeDetail() {
   const [engagement, setEngagement] = useState({ likeCount: 0, liked: false, comments: [] });
   const [commentText, setCommentText] = useState("");
   const [commenting, setCommenting] = useState(false);
+  const commentRestricted = user?.status === "comment_restricted" || user?.status === "profile_blocked";
   const [loading, setLoading] = useState(true);
 
   const loadEngagement = React.useCallback(() => {
@@ -95,6 +96,7 @@ export default function CommunityRecipeDetail() {
   };
 
   const addComment = async () => {
+    if (commentRestricted) return;
     if (!commentText.trim()) return;
     setCommenting(true);
     try {
@@ -283,6 +285,9 @@ export default function CommunityRecipeDetail() {
             <MessageCircle className="w-5 h-5" /> {t("community.comments")}
           </h2>
           {isAuthenticated ? (
+            commentRestricted ? (
+              <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{t("community.comment_restricted")}</p>
+            ) : (
             <div className="mt-4 flex gap-2">
               <input
                 value={commentText}
@@ -302,6 +307,7 @@ export default function CommunityRecipeDetail() {
                 <Send className="h-4 w-4" />
               </button>
             </div>
+            )
           ) : (
             <Link
               to="/login"

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useI18n } from "@/lib/i18n";
 import { useAuth } from "@/lib/AuthContext";
+import { appApi } from "@/api/supabaseClient";
 import Logo from "@/components/Logo";
 import LanguageSwitcher from "./LanguageSwitcher";
 import AccessibilityPanel from "./AccessibilityPanel";
@@ -15,6 +16,7 @@ export default function Layout({ children }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [a11yOpen, setA11yOpen] = useState(false);
+  const [notificationCount, setNotificationCount] = useState(0);
   const moreRef = useRef(null);
 
   useEffect(() => {
@@ -127,6 +129,9 @@ export default function Layout({ children }) {
                     >
                       <UserCircle className="w-4 h-4" />
                       {t("nav.profile")}
+                      {notificationCount > 0 && (
+                        <span className="ml-0.5 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{notificationCount}</span>
+                      )}
                     </Link>
                     <button
                       onClick={() => logout(false)}
@@ -195,8 +200,11 @@ export default function Layout({ children }) {
           <div className="grid grid-cols-2 gap-2 mb-3 sm:hidden">
             {isAuthenticated ? (
               <>
-                <Link to="/profile" onClick={() => setMobileOpen(false)} className="px-4 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground text-center">
+                <Link to="/profile" onClick={() => setMobileOpen(false)} className="relative px-4 py-3 rounded-2xl text-sm font-semibold bg-primary text-primary-foreground text-center">
                   {t("nav.profile")}
+                  {notificationCount > 0 && (
+                    <span className="absolute -right-1 -top-1 inline-flex min-w-5 items-center justify-center rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold text-white">{notificationCount}</span>
+                  )}
                 </Link>
                 <button
                   onClick={() => {
