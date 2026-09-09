@@ -360,8 +360,8 @@ function ActivityPanel({ loading, scanHistory, t }) {
         <div className="space-y-3">
           {scanHistory.map((item) => (
             <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-border/60 bg-background p-3 transition-colors hover:border-primary/30">
-              {item.image_url ? (
-                <img src={item.image_url} alt={item.ingredient_name || ""} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+              {(item.image_thumbnail || item.image_url) ? (
+                <img src={item.image_thumbnail || item.image_url} alt={item.ingredient_name || ""} className="h-12 w-12 shrink-0 rounded-xl object-cover" />
               ) : (
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary">
                   <ScanLine className="h-5 w-5 text-muted-foreground" />

@@ -160,7 +160,8 @@ export const appApi = {
     async create(values) {
       const user = await getCurrentUser();
       const localRow = createLocalScanHistory(user.id, values, false);
-      const payload = { ...values, user_id: user.id };
+      const { image_thumbnail, ...remoteValues } = values;
+      const payload = { ...remoteValues, user_id: user.id };
       const { data, error } = await supabase
         .from("scan_history")
         .insert(payload)
@@ -170,7 +171,7 @@ export const appApi = {
         console.warn("Remote scan history insert failed; local history was saved.", error);
         return localRow;
       }
-      createLocalScanHistory(user.id, { ...data, local_id: localRow.id, remote_id: data.id }, true);
+      createLocalScanHistory(user.id, { ...data, image_thumbnail, local_id: localRow.id, remote_id: data.id }, true);
       return data;
     },
 

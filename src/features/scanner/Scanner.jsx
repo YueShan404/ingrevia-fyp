@@ -48,6 +48,26 @@ const EXTRA_ALIASES = {
   "chili pepper": ["chili", "chilli", "chile", "chili pepper", "chilli pepper", "bird's eye chili", "bird eye chili", "cayenne pepper", "red chili", "green chili", "pepper"],
 };
 
+const createScanThumbnail = (dataUrl) =>
+  new Promise((resolve) => {
+    if (!dataUrl?.startsWith("data:image/")) {
+      resolve("");
+      return;
+    }
+    const image = new Image();
+    image.onload = () => {
+      const maxSize = 180;
+      const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.width * scale));
+      canvas.height = Math.max(1, Math.round(image.height * scale));
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(image, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.65));
+    };
+    image.onerror = () => resolve("");
+    image.src = dataUrl;
+  });
 const allIngredientTerms = (ingredient) => {
   const baseTerms = getIngredientTerms(ingredient);
   const aliases = baseTerms.flatMap((term) => EXTRA_ALIASES[term] || []);
@@ -219,9 +239,9 @@ export default function Scanner() {
         bestCatalogue.score >= 86 &&
         (!secondCatalogue || bestCatalogue.score - secondCatalogue.score >= 8)
       );
-      const fallbackMatchedIngredient = llmResult.matchedIngredient;
+      const fallbackMatchedIngredient = llmResult.matchedIngredient || llmResult.matched_ingredient;
       const candidateIngredient = clearCatalogueMatch ? bestCatalogue.ingredient : fallbackMatchedIngredient;
-      const confidence = llmResult.confidence || 0;
+      const confidence = Math.max(Number(llmResult.confidence) || 0, clearCatalogueMatch ? bestCatalogue.score : 0);
       const matched = !!candidateIngredient && confidence >= 55 && (clearCatalogueMatch || Boolean(fallbackMatchedIngredient));
       const matchedIngredient = matched ? candidateIngredient : null;
 
@@ -243,12 +263,14 @@ export default function Scanner() {
       setResult(scanResult);
 
       // Save to scan history for the current user.
+      const historyThumbnail = await createScanThumbnail(previewUrl);
       const historyName = scanResult.matchedIngredient?.name || llmResult.ingredient_name || t("scanner.not_matched");
       try {
         await appApi.scanHistory.create({
           ingredient_name: historyName,
           ingredient_id: scanResult.matched ? scanResult.matchedIngredient?.id || null : null,
-          image_url: file_url && !file_url.startsWith("data:") ? file_url : previewUrl,
+          image_url: file_url && !file_url.startsWith("data:") ? file_url : "",
+          image_thumbnail: historyThumbnail,
           confidence,
           matched: scanResult.matched,
         });

@@ -126,8 +126,8 @@ function EmptyState({ label }) {
 function ScanItem({ item, t }) {
   return (
     <div className="flex items-center gap-4 glass-card rounded-2xl border border-border/50 p-3 hover:shadow-md transition-all">
-      {item.image_url ? (
-        <img src={item.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
+      {(item.image_thumbnail || item.image_url) ? (
+        <img src={item.image_thumbnail || item.image_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
       ) : (
         <div className="w-16 h-16 rounded-xl bg-secondary shrink-0 flex items-center justify-center">
           <ScanLine className="h-5 w-5 text-muted-foreground" />

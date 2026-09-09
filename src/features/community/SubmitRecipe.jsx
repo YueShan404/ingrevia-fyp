@@ -17,7 +17,7 @@ export default function SubmitRecipe() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    title: "", author: "", cuisine: "malay", description: "",
+    title: "", cuisine: "malay", description: "",
     ingredients: "", steps: "", zero_waste_tip: "",
     spice_level: "medium", prep_time: "", cook_time: "", servings: "2",
   });
@@ -107,7 +107,7 @@ export default function SubmitRecipe() {
 
       const createdRecipe = await appApi.entities.CommunityRecipe.create({
         title: form.title,
-        author: form.author || user?.full_name || user?.email || "Ingrevia member",
+        author: user?.full_name || user?.email || "Ingrevia member",
         user_id: user?.id,
         cuisine: form.cuisine,
         image_url: images[0]?.url,
@@ -168,7 +168,7 @@ export default function SubmitRecipe() {
       <div className="flex flex-col gap-2 w-full max-w-xs">
         <button onClick={() => navigate("/community")}
           className="px-5 py-2.5 rounded-full brand-gradient text-white font-semibold text-sm">{t("submit.view_community")}</button>
-        <button onClick={() => { setSubmitted(false); setForm({ title: "", author: "", cuisine: "malay", description: "", ingredients: "", steps: "", zero_waste_tip: "", spice_level: "medium", prep_time: "", cook_time: "", servings: "2" }); setImages([]); setMainTags([]); }}
+        <button onClick={() => { setSubmitted(false); setForm({ title: "", cuisine: "malay", description: "", ingredients: "", steps: "", zero_waste_tip: "", spice_level: "medium", prep_time: "", cook_time: "", servings: "2" }); setImages([]); setMainTags([]); }}
           className="px-5 py-2.5 rounded-full bg-white/15 text-white font-semibold text-sm hover:bg-white/25 transition-colors">{t("submit.share_another")}</button>
       </div>
     </div>
@@ -224,15 +224,13 @@ export default function SubmitRecipe() {
             )}
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label={t("submit.recipe_title")} required>
-              <input type="text" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[hsl(18,71%,42%)]" />
-            </Field>
-            <Field label={t("submit.author")} required>
-              <input type="text" required value={form.author || user?.full_name || ""} onChange={(e) => setForm({ ...form, author: e.target.value })}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[hsl(18,71%,42%)]" />
-            </Field>
+          <Field label={t("submit.recipe_title")} required>
+            <input type="text" required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[hsl(18,71%,42%)]" />
+          </Field>
+
+          <div className="rounded-2xl border border-border bg-secondary/40 px-4 py-3 text-sm text-muted-foreground">
+            {t("submit.posting_as")} <span className="font-semibold text-foreground">{user?.full_name || user?.email || t("profile.default_user")}</span>
           </div>
 
           <Field label={t("submit.cuisine")} required>
