@@ -27,11 +27,11 @@ export function useI18n() {
 }
 
 // Helper to pick a localized field from an entity
-export function localized(entity, field, lang) {
+export function localized(entity, field, lang, options = {}) {
   if (!entity) return "";
   const suffix = { en: "", bm: "_bm", zh: "_zh", ta: "_ta" }[lang] || "";
   const localizedValue = entity[`${field}${suffix}`];
-  const fallbackValue = entity[field];
+  const fallbackValue = options.fallback === false ? "" : entity[field];
 
   if (Array.isArray(localizedValue)) {
     return localizedValue.length > 0 ? localizedValue : fallbackValue || [];

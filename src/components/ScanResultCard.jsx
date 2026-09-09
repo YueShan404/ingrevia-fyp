@@ -52,6 +52,8 @@ export default function ScanResultCard({ result, recipes = [] }) {
   }
 
   const ing = result?.matchedIngredient;
+  const ingredientDescription = localized(ing, "description", lang, { fallback: false });
+  const ingredientBenefits = localized(ing, "benefits", lang, { fallback: false });
   const matchedRecipes = result?.matched && ing
     ? (recipes || []).filter((r) =>
         (r.ingredient_tags || []).some((tag) =>
@@ -97,7 +99,7 @@ export default function ScanResultCard({ result, recipes = [] }) {
 
           {/* What it is */}
           <p className="text-sm leading-relaxed mb-4">
-            {localized(ing, "description", lang) || result.description || ""}
+            {ingredientDescription || t("scanner.translation_unavailable")}
           </p>
 
           {/* Quick nutrition chips per 100g */}
@@ -124,12 +126,12 @@ export default function ScanResultCard({ result, recipes = [] }) {
           )}
 
           {/* Benefits */}
-          {localized(ing, "benefits", lang) && (
+          {ingredientBenefits && (
             <div className="mb-5">
               <h4 className="font-heading font-bold text-sm mb-1.5 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-[hsl(126,24%,44%)]" /> {t("common.benefits")}
               </h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">{localized(ing, "benefits", lang)}</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">{ingredientBenefits}</p>
             </div>
           )}
 
