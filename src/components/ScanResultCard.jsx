@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { useI18n, localized } from "@/lib/i18n";
-import { CheckCircle2, AlertTriangle, ArrowRight, BookOpen, ChefHat, Sparkles } from "lucide-react";
+import { CheckCircle2, AlertTriangle, ArrowRight, BookOpen, ChefHat, Sparkles, Target } from "lucide-react";
 
 const NUT_CHIPS = [
   { key: "calories", label: "kcal", unit: "" },
@@ -10,7 +10,30 @@ const NUT_CHIPS = [
   { key: "fiber", labelKey: "nutrition.fiber", unit: "g" },
   { key: "fat", labelKey: "nutrition.fat", unit: "g" },
 ];
+function confidenceTone(confidence = 0) {
+  if (confidence >= 75) return { labelKey: "scanner.confidence_high", text: "text-emerald-700", bar: "bg-emerald-500" };
+  if (confidence >= 45) return { labelKey: "scanner.confidence_medium", text: "text-amber-700", bar: "bg-amber-500" };
+  return { labelKey: "scanner.confidence_low", text: "text-red-600", bar: "bg-red-500" };
+}
 
+function ConfidenceMeter({ confidence = 0, t }) {
+  const rounded = Math.max(0, Math.min(100, Math.round(Number(confidence) || 0)));
+  const tone = confidenceTone(rounded);
+  return (
+    <div className="rounded-2xl border border-border/60 bg-background/80 p-3">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground">
+          <Target className="h-3.5 w-3.5 text-primary" /> {t("scanner.confidence_label")}
+        </span>
+        <span className={`text-sm font-extrabold ${tone.text}`}>{rounded}% - {t(tone.labelKey)}</span>
+      </div>
+      <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+        <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${rounded}%` }} />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">{t("scanner.confidence_hint")}</p>
+    </div>
+  );
+}
 /**
  * Rich scan result panel.
  *  - When matched: full ingredient details (image, local names, description,
@@ -66,11 +89,8 @@ export default function ScanResultCard({ result, recipes = [] }) {
                   ))}
                 </div>
               )}
-              <div className="flex items-center gap-2 mt-3 max-w-[200px]">
-                <div className="flex-1 h-2 rounded-full bg-secondary overflow-hidden">
-                  <div className="h-full brand-gradient rounded-full" style={{ width: `${result.confidence}%` }} />
-                </div>
-                <span className="text-xs font-semibold text-[hsl(126,24%,28%)]">{result.confidence}% {t("scanner.confidence")}</span>
+              <div className="mt-3 max-w-sm">
+                <ConfidenceMeter confidence={result.confidence} t={t} />
               </div>
             </div>
           </div>
@@ -165,35 +185,40 @@ export default function ScanResultCard({ result, recipes = [] }) {
           </div>
         </>
       ) : (
-        <div className="flex items-start gap-3 mb-4">
-          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-          <div>
-            <p className="font-semibold">{result?.ingredient_name ? result.ingredient_name : t("scanner.not_matched")}</p>
-            {result?.ingredient_name && (
-              <p className="mt-1 text-xs font-semibold text-primary">
-                {t("scanner.detected_not_catalogue")}
-              </p>
-            )}
-            <p className="text-sm text-muted-foreground mt-1">{result?.description}</p>
-            {(result?.detected_category || result?.common_names?.length > 0) && (
-              <div className="mt-3 flex flex-wrap gap-2">
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 text-amber-950">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="font-heading text-lg font-bold">{result?.ingredient_name || t("scanner.not_matched")}</p>
+              <p className="mt-1 text-sm font-semibold text-primary">{t("scanner.detected_not_catalogue")}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("scanner.unmatched_hint")}</p>
+            </div>
+          </div>
+
+          <ConfidenceMeter confidence={result?.confidence} t={t} />
+
+          {(result?.detected_category || result?.common_names?.length > 0) && (
+            <div>
+              <h4 className="mb-2 text-xs font-bold uppercase text-muted-foreground">{t("scanner.detected_labels")}</h4>
+              <div className="flex flex-wrap gap-2">
                 {result.detected_category && (
                   <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground">
                     {result.detected_category}
                   </span>
                 )}
-                {result.common_names?.slice(0, 4).map((name) => (
+                {result.common_names?.slice(0, 5).map((name) => (
                   <span key={name} className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-muted-foreground">
                     {name}
                   </span>
                 ))}
               </div>
-            )}
-            {result?.confidence < 40 && result?.confidence > 0 && (
-              <p className="text-xs text-amber-600 mt-2">{t("scanner.low_confidence")}</p>
-            )}
-            {result?.suggestions?.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
+            </div>
+          )}
+
+          {result?.suggestions?.length > 0 && (
+            <div>
+              <h4 className="mb-2 text-xs font-bold uppercase text-muted-foreground">{t("scanner.possible_matches")}</h4>
+              <div className="flex flex-wrap gap-2">
                 {result.suggestions.map((suggestion) => (
                   <Link
                     key={suggestion.id}
@@ -205,8 +230,8 @@ export default function ScanResultCard({ result, recipes = [] }) {
                   </Link>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </div>

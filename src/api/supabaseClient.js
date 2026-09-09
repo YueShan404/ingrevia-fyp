@@ -111,20 +111,26 @@ const readLocalScanHistory = (userId) => {
 };
 
 const writeLocalScanHistory = (userId, rows) => {
-  localStorage.setItem(localScanHistoryKey(userId), JSON.stringify(rows.slice(0, 100)));
+  try {
+    localStorage.setItem(localScanHistoryKey(userId), JSON.stringify(rows.slice(0, 100)));
+  } catch (error) {
+    const trimmedRows = rows.map((row) => ({ ...row, image_url: row.image_url?.startsWith("data:") ? "" : row.image_url }));
+    localStorage.setItem(localScanHistoryKey(userId), JSON.stringify(trimmedRows.slice(0, 50)));
+  }
 };
 
 const createLocalScanHistory = (userId, values, synced = false) => {
+  const now = new Date().toISOString();
   const row = {
     ...values,
-    id: `local-${crypto.randomUUID?.() || Date.now()}`,
-    remote_id: synced ? values.id : null,
-    created_date: new Date().toISOString(),
-    updated_date: new Date().toISOString(),
+    id: values.local_id || `local-${crypto.randomUUID?.() || Date.now()}`,
+    remote_id: synced ? values.id : values.remote_id || null,
+    created_date: values.created_date || now,
+    updated_date: values.updated_date || now,
     user_id: userId,
     synced,
   };
-  writeLocalScanHistory(userId, [row, ...readLocalScanHistory(userId)]);
+  writeLocalScanHistory(userId, [row, ...readLocalScanHistory(userId).filter((item) => item.id !== row.id)]);
   return row;
 };
 
@@ -132,7 +138,9 @@ const mergeScanHistoryRows = (remoteRows, localRows) => {
   const seen = new Set();
   return [...(remoteRows || []), ...(localRows || [])]
     .filter((row) => {
-      const key = row.id || `${row.created_date}-${row.ingredient_name}`;
+      const createdDate = row.created_date || row.created_at || row.updated_date || new Date().toISOString();
+      row.created_date = createdDate;
+      const key = row.remote_id || row.id || `${createdDate}-${row.ingredient_name}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
@@ -151,6 +159,7 @@ export const appApi = {
   scanHistory: {
     async create(values) {
       const user = await getCurrentUser();
+      const localRow = createLocalScanHistory(user.id, values, false);
       const payload = { ...values, user_id: user.id };
       const { data, error } = await supabase
         .from("scan_history")
@@ -158,10 +167,10 @@ export const appApi = {
         .select("*")
         .single();
       if (error) {
-        console.warn("Remote scan history insert failed; saving local backup.", error);
-        return createLocalScanHistory(user.id, values, false);
+        console.warn("Remote scan history insert failed; local history was saved.", error);
+        return localRow;
       }
-      createLocalScanHistory(user.id, data, true);
+      createLocalScanHistory(user.id, { ...data, local_id: localRow.id, remote_id: data.id }, true);
       return data;
     },
 

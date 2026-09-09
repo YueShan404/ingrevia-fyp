@@ -68,6 +68,8 @@ const EXTRA_ALIASES: Record<string, string[]> = {
   cabbage: ["cabbage", "round cabbage", "green cabbage"],
   "chinese cabbage": ["chinese cabbage", "napa cabbage", "wong bok"],
   "bok choy": ["bok choy", "pak choy", "bok choy sum", "choy sum"],
+  chili: ["chili", "chilli", "chile", "chili pepper", "chilli pepper", "bird's eye chili", "bird eye chili", "cayenne pepper", "red chili", "green chili", "pepper"],
+  "chili pepper": ["chili", "chilli", "chile", "chili pepper", "chilli pepper", "bird's eye chili", "bird eye chili", "cayenne pepper", "red chili", "green chili", "pepper"],
 };
 
 const allIngredientTerms = (ingredient: Ingredient) => {
@@ -199,18 +201,22 @@ async function detectWithGoogleVision(imageUrl: string): Promise<Detection> {
   }
 
   const labels = payload.responses?.[0]?.labelAnnotations || [];
-  const best = labels[0];
+  const usefulLabels = labels.filter((label: { description?: string }) => !BROAD_LABELS.has(normalize(label.description || "")));
+  const best = usefulLabels[0] || labels[0];
 
   if (!best?.description) {
     throw new Error("Google Vision returned no readable labels for this image.");
   }
 
+  const commonNames = labels
+    .filter((label: { description?: string }) => normalize(label.description || "") !== normalize(best.description))
+    .slice(0, 8)
+    .map((label: { description?: string }) => label.description)
+    .filter(Boolean);
+
   return {
     ingredient_name: best.description,
-    common_names: labels
-      .slice(1, 8)
-      .map((label: { description?: string }) => label.description)
-      .filter(Boolean),
+    common_names: commonNames,
     category: "food",
     confidence: Math.max(0, Math.min(100, Math.round((best.score || 0) * 100))),
     description: "Detected using Google Vision label detection and matched against the Ingrevia ingredient catalogue.",

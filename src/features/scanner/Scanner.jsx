@@ -44,6 +44,8 @@ const EXTRA_ALIASES = {
   cabbage: ["cabbage", "round cabbage", "green cabbage"],
   "chinese cabbage": ["chinese cabbage", "napa cabbage", "wong bok"],
   "bok choy": ["bok choy", "pak choy", "choy sum"],
+  chili: ["chili", "chilli", "chile", "chili pepper", "chilli pepper", "bird's eye chili", "bird eye chili", "cayenne pepper", "red chili", "green chili", "pepper"],
+  "chili pepper": ["chili", "chilli", "chile", "chili pepper", "chilli pepper", "bird's eye chili", "bird eye chili", "cayenne pepper", "red chili", "green chili", "pepper"],
 };
 
 const allIngredientTerms = (ingredient) => {

@@ -499,6 +499,7 @@ export default function Admin() {
           saving={savingItem}
           setEditingItem={setEditingItem}
           t={t}
+          toast={toast}
         />
       </div>
     </Layout>
@@ -621,7 +622,8 @@ function normalizeEditDraft(type, draft) {
   };
 }
 
-function AdminDetailDialog({ detailItem, detailType, editingItem, onClose, onEdit, onSave, saving, setEditingItem, t }) {
+function AdminDetailDialog({ detailItem, detailType, editingItem, onClose, onEdit, onSave, saving, setEditingItem, t, toast }) {
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   if (!detailItem || !detailType) return null;
   const isEditing = Boolean(editingItem);
   const fields = detailType === "ingredient"
@@ -638,6 +640,34 @@ function AdminDetailDialog({ detailItem, detailType, editingItem, onClose, onEdi
 
         {detailItem.image_url && (
           <img src={detailItem.image_url} alt="" className="h-48 w-full rounded-2xl object-cover" />
+        )}
+
+        {isEditing && (
+          <label className="block rounded-2xl border border-dashed border-border bg-secondary/40 p-4 text-center">
+            <Upload className="mx-auto h-5 w-5 text-primary" />
+            <span className="mt-1 block text-sm font-bold">{uploadingPhoto ? t("admin.uploading_photo") : t("admin.upload_photo")}</span>
+            <span className="mt-1 block text-xs text-muted-foreground">{t("admin.upload_photo_hint")}</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={uploadingPhoto}
+              className="hidden"
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                setUploadingPhoto(true);
+                try {
+                  const { file_url } = await appApi.integrations.Core.UploadFile({ file });
+                  setEditingItem({ ...editingItem, image_url: file_url });
+                } catch (error) {
+                  toast?.({ title: t("admin.upload_photo_failed"), description: error?.message || t("common.try_again"), variant: "destructive" });
+                } finally {
+                  setUploadingPhoto(false);
+                  event.target.value = "";
+                }
+              }}
+            />
+          </label>
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
